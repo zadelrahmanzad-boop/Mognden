@@ -2,10 +2,9 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>بحث سريع جدا</title>
+<title>نظام بحث احترافي</title>
 
 <style>
-
 body{
     font-family:Arial;
     direction:rtl;
@@ -15,8 +14,10 @@ body{
     padding:20px;
 }
 
+h2{margin-bottom:10px;}
+
 input{
-    width:350px;
+    width:400px;
     max-width:90%;
     padding:12px;
     font-size:16px;
@@ -24,41 +25,39 @@ input{
     border:1px solid #ccc;
 }
 
+#info{
+    margin:10px;
+    font-weight:bold;
+}
+
 table{
     width:100%;
     border-collapse:collapse;
     background:white;
-    margin-top:20px;
+    margin-top:15px;
 }
 
 th,td{
     border:1px solid #ddd;
     padding:7px;
-    font-size:14px;
+    font-size:13px;
 }
 
 th{
-    background:#ececec;
+    background:#eee;
+    position:sticky;
+    top:0;
 }
-
-#count{
-    margin-top:15px;
-    font-weight:bold;
-}
-
 </style>
 </head>
 
 <body>
 
-<h2>البحث في البيانات</h2>
+<h2>🔍 نظام بحث احترافي</h2>
 
-<input type="text"
-id="search"
-placeholder="اكتب للبحث">
+<input id="search" placeholder="ابحث (اسم - محافظة - جهة - رقم ثلاثي)">
 
-<div id="count"></div>
-
+<div id="info"></div>
 <div id="table"></div>
 
 <script>
@@ -67,73 +66,132 @@ const url =
 "https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv";
 
 let lines = [];
+let worker;
 
+// تحميل البيانات مرة واحدة فقط
 fetch(url)
 .then(r => r.text())
 .then(text => {
 
-    lines = text.split("\n");
+    lines = text.trim().split("\n");
 
-    document.getElementById("count").innerHTML =
-    "تم تحميل البيانات: " + (lines.length - 1);
+    document.getElementById("info").innerHTML =
+    "تم تحميل: " + (lines.length - 1) + " سجل";
+
+    initWorker();
 
 });
+
+function initWorker(){
+
+worker = new Worker(URL.createObjectURL(new Blob([`
+
+let cache = [];
+
+self.onmessage = function(e){
+
+    if(e.data.type === "init"){
+        cache = e.data.lines;
+        return;
+    }
+
+    let q = e.data.query;
+    let res = [];
+    let count = 0;
+
+    // بحث سريع داخل البيانات
+    for(let i=1;i<cache.length;i++){
+
+        let row = cache[i];
+
+        if(row.toLowerCase().includes(q)){
+
+            let c = row.split(";");
+
+            res.push({
+                a:c[0]||"",
+                b:c[1]||"",
+                c:c[2]||"",
+                d:c[3]||"",
+                e:c[4]||""
+            });
+
+            count++;
+
+            if(count >= 150) break;
+        }
+    }
+
+    self.postMessage(res);
+};
+
+`], {type:"text/javascript"})));
+
+worker.postMessage({type:"init", lines});
+
+worker.onmessage = function(e){
+
+    render(e.data);
+
+};
+
+}
+
+function render(data){
+
+let html = `
+<table>
+<tr>
+<th>المؤهل</th>
+<th>الرقم الثلاثي</th>
+<th>الاسم</th>
+<th>المحافظة</th>
+<th>الجهة</th>
+</tr>
+`;
+
+data.forEach(r=>{
+
+html += `
+<tr>
+<td>${r.a}</td>
+<td>${r.b}</td>
+<td>${r.c}</td>
+<td>${r.d}</td>
+<td>${r.e}</td>
+</tr>
+`;
+
+});
+
+html += "</table>";
+
+document.getElementById("table").innerHTML = html;
+
+}
+
+// بحث لحظي (debounce بسيط)
+let t;
 
 document.getElementById("search")
 .addEventListener("input", function(){
 
-    let q = this.value.trim().toLowerCase();
+clearTimeout(t);
 
-    if(q.length < 2){
-        document.getElementById("table").innerHTML = "";
-        return;
-    }
+let q = this.value.trim().toLowerCase();
 
-    let html = `
-    <table>
-    <tr>
-        <th>المؤهل</th>
-        <th>الرقم الثلاثي</th>
-        <th>الاسم</th>
-        <th>المحافظة</th>
-        <th>الجهة</th>
-    </tr>
-    `;
+if(q.length < 2){
+    document.getElementById("table").innerHTML = "";
+    return;
+}
 
-    let found = 0;
+t = setTimeout(()=>{
 
-    for(let i = 1; i < lines.length; i++){
+worker.postMessage({
+    query:q
+});
 
-        let row = lines[i];
-
-        if(row.toLowerCase().includes(q)){
-
-            let c = row.split(",");
-
-            html += `
-            <tr>
-                <td>${c[0] || ""}</td>
-                <td>${c[2] || ""}</td>
-                <td>${c[3] || ""}</td>
-                <td>${c[4] || ""}</td>
-                <td>${c[5] || ""}</td>
-            </tr>
-            `;
-
-            found++;
-
-            // حد أقصى للنتائج
-            if(found >= 100)
-                break;
-        }
-    }
-
-    html += "</table>";
-
-    document.getElementById("count").innerHTML =
-    "عدد النتائج: " + found;
-
-    document.getElementById("table").innerHTML = html;
+}, 200);
 
 });
 
