@@ -5,6 +5,7 @@
 <title>بحث اسطوانة</title>
 
 <style>
+
 body{
     font-family:Tahoma, Arial;
     direction:rtl;
@@ -18,7 +19,7 @@ body{
 h2{
     margin-bottom:10px;
     font-size:32px;
-    font-weight:bold;
+    font-weight:900;
     color:#111;
 }
 
@@ -29,14 +30,15 @@ input{
     font-size:18px;
     border-radius:8px;
     border:2px solid #999;
-    font-weight:bold;
+    font-weight:900;
+    outline:none;
 }
 
 #info{
     margin:10px;
-    font-weight:bold;
+    font-weight:900;
     font-size:18px;
-    color:#c40000; /* أحمر */
+    color:#111;
 }
 
 table{
@@ -44,14 +46,13 @@ table{
     border-collapse:collapse;
     background:white;
     margin-top:15px;
-    font-weight:bold;
 }
 
 th,td{
     border:1px solid #ddd;
     padding:9px;
     font-size:15px;
-    font-weight:bold;
+    font-weight:900;
 }
 
 th{
@@ -61,11 +62,14 @@ th{
     font-size:16px;
 }
 
-/* منطقة ( ج ) باللون الأحمر */
-.zone-j{
+/* السجلات الخاصة */
+.special-row td{
     color:red;
-    font-weight:bold;
+    font-weight:900;
+    font-size:16px;
+    background:#fff5f5;
 }
+
 </style>
 </head>
 
@@ -75,7 +79,8 @@ th{
 
 <input id="search" placeholder="ابحث (اسم - محافظة - جهة - رقم ثلاثي)">
 
-<div id="info" class="zone-j"></div>
+<div id="info"></div>
+
 <div id="table"></div>
 
 <script>
@@ -86,7 +91,7 @@ const url =
 let lines = [];
 let worker;
 
-// تحميل البيانات مرة واحدة فقط
+// تحميل البيانات
 fetch(url)
 .then(r => r.text())
 .then(text => {
@@ -94,7 +99,7 @@ fetch(url)
     lines = text.trim().split("\n");
 
     document.getElementById("info").innerHTML =
-    "منطقة ( ج ) - تم تحميل: " + (lines.length - 1) + " سجل";
+    "تم تحميل: " + (lines.length - 1) + " سجل";
 
     initWorker();
 
@@ -117,7 +122,6 @@ self.onmessage = function(e){
     let res = [];
     let count = 0;
 
-    // بحث سريع داخل البيانات
     for(let i=1;i<cache.length;i++){
 
         let row = cache[i];
@@ -145,7 +149,10 @@ self.onmessage = function(e){
 
 `], {type:"text/javascript"})));
 
-worker.postMessage({type:"init", lines});
+worker.postMessage({
+    type:"init",
+    lines
+});
 
 worker.onmessage = function(e){
 
@@ -170,13 +177,18 @@ let html = `
 
 data.forEach(r=>{
 
+// تلوين السجل لو الجهة تحتوي على داخلية منطقة ( ج )
+let rowClass = r.e.includes("داخلية منطقة ( ج )")
+? "special-row"
+: "";
+
 html += `
-<tr>
+<tr class="${rowClass}">
 <td>${r.a}</td>
 <td>${r.b}</td>
 <td>${r.c}</td>
 <td>${r.d}</td>
-<td class="zone-j">${r.e}</td>
+<td>${r.e}</td>
 </tr>
 `;
 
@@ -191,7 +203,8 @@ document.getElementById("table").innerHTML = html;
 // بحث لحظي
 let t;
 
-document.getElementById("search")
+document
+.getElementById("search")
 .addEventListener("input", function(){
 
 clearTimeout(t);
@@ -199,15 +212,17 @@ clearTimeout(t);
 let q = this.value.trim().toLowerCase();
 
 if(q.length < 2){
+
     document.getElementById("table").innerHTML = "";
     return;
+
 }
 
 t = setTimeout(()=>{
 
-worker.postMessage({
-    query:q
-});
+    worker.postMessage({
+        query:q
+    });
 
 }, 200);
 
