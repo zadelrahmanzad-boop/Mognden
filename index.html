@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>بحث اسطوانة</title>
+<title>نظام البحث المتطور</title>
 
 <style>
 
@@ -16,21 +16,19 @@ body{
     font-weight:bold;
 }
 
-h2{ font-size:36px; }
+h2{ font-size:34px; }
 
-input{
-    width:280px;
-    padding:12px;
+input,select{
+    width:250px;
+    padding:10px;
     margin:5px;
     border-radius:10px;
     border:2px solid #999;
-    font-size:18px;
     font-weight:bold;
 }
 
 button{
-    padding:12px 25px;
-    font-size:18px;
+    padding:10px 20px;
     border:none;
     border-radius:10px;
     cursor:pointer;
@@ -40,22 +38,21 @@ button{
 }
 
 .clear-btn{ background:#c40000; }
-
-.logout{ background:#444; margin-top:10px; }
+.logout{ background:#444; }
 
 #main{ display:none; }
 
 table{
     width:100%;
-    margin-top:15px;
     border-collapse:collapse;
     background:white;
+    margin-top:10px;
 }
 
 th,td{
     border:1px solid #ddd;
-    padding:10px;
-    font-size:16px;
+    padding:8px;
+    font-size:14px;
 }
 
 th{ background:#eee; }
@@ -65,17 +62,16 @@ th{ background:#eee; }
     background:#fff5f5;
 }
 
-#count{
-    font-size:20px;
-    margin:10px;
-    color:green;
-}
+#count{ color:green; font-size:18px; }
 
-#error{ color:red; }
+#stats{ margin:10px; font-size:16px; }
 
-#userInfo{
-    font-size:20px;
-    margin:10px;
+#userInfo{ font-size:18px; margin:10px; }
+
+.panel{
+    margin-top:20px;
+    padding:10px;
+    border-top:2px solid #000;
 }
 
 </style>
@@ -93,7 +89,7 @@ th{ background:#eee; }
 <input type="password" id="password" placeholder="كلمة السر">
 <br><br>
 
-<button onclick="checkPassword()">دخول</button>
+<button onclick="login()">دخول</button>
 
 <div id="error"></div>
 
@@ -103,19 +99,36 @@ th{ background:#eee; }
 <div id="main">
 
 <div id="userInfo"></div>
+<div id="stats"></div>
 
-<h2>🔍 بحث اسطوانة</h2>
+<h2>🔍 بحث ذكي</h2>
 
-<div>
-
-<input id="search" placeholder="بحث عام">
+<input id="search" placeholder="ابحث هنا">
 
 <button class="clear-btn" onclick="clearSearch()">مسح</button>
 
-</div>
-
 <div id="count"></div>
 <div id="table"></div>
+
+<!-- لوحة التحكم -->
+<div class="panel" id="adminPanel" style="display:none;">
+
+<h3>⚙️ لوحة التحكم</h3>
+
+<input id="newUser" placeholder="اسم المستخدم">
+<input id="newPass" placeholder="كلمة السر">
+
+<select id="newRole">
+<option value="viewer">viewer</option>
+<option value="editor">editor</option>
+<option value="admin">admin</option>
+</select>
+
+<button onclick="addUser()">➕ إضافة</button>
+
+<div id="usersList"></div>
+
+</div>
 
 <button class="logout" onclick="logout()">خروج</button>
 
@@ -123,19 +136,29 @@ th{ background:#eee; }
 
 <script>
 
-/////////////////////
+////////////////////////////
 // USERS + ROLES
-/////////////////////
-const users = {
-    "Eh": {pass:"Z2026", role:"admin"},
-    "mo": {pass:"2026", role:"user"},
-    "sh": {pass:"2026", role:"user"}
+////////////////////////////
+let users = JSON.parse(localStorage.getItem("users")) || {
+    "admin": {pass:"eh2026", role:"admin"}
 };
 
-/////////////////////
+let stats = JSON.parse(localStorage.getItem("stats")) || {
+    searches:0
+};
+
+function saveUsers(){
+localStorage.setItem("users",JSON.stringify(users));
+}
+
+function saveStats(){
+localStorage.setItem("stats",JSON.stringify(stats));
+}
+
+////////////////////////////
 // LOGIN
-/////////////////////
-function checkPassword(){
+////////////////////////////
+function login(){
 
 let u=document.getElementById("username").value;
 let p=document.getElementById("password").value;
@@ -148,52 +171,122 @@ if(users[u] && users[u].pass===p){
     showMain(u);
 
 }else{
-    document.getElementById("error").innerHTML="❌ خطأ في البيانات";
+    document.getElementById("error").innerHTML="❌ خطأ";
 }
 
 }
 
-/////////////////////
+////////////////////////////
 // SHOW MAIN
-/////////////////////
+////////////////////////////
 function showMain(user){
 
 document.getElementById("login").style.display="none";
 document.getElementById("main").style.display="block";
 
-document.getElementById("userInfo").innerHTML=
-"👤 مرحباً: " + user;
+document.getElementById("userInfo").innerHTML="👤 "+user;
+
+renderStats();
+
+if(users[user].role==="admin"){
+document.getElementById("adminPanel").style.display="block";
+renderUsers();
+}
 
 loadData();
 
 }
 
-/////////////////////
+////////////////////////////
 // AUTO LOGIN
-/////////////////////
+////////////////////////////
 window.onload=function(){
 
 let u=localStorage.getItem("user");
 
 if(localStorage.getItem("loggedIn")==="true" && u){
-
-    showMain(u);
-
+showMain(u);
 }
 
 }
 
-/////////////////////
+////////////////////////////
 // LOGOUT
-/////////////////////
+////////////////////////////
 function logout(){
 localStorage.clear();
 location.reload();
 }
 
-/////////////////////
+////////////////////////////
+// STATS
+////////////////////////////
+function renderStats(){
+
+let total=Object.keys(users).length;
+
+document.getElementById("stats").innerHTML=
+`👥 Users: ${total} | 🔍 Searches: ${stats.searches}`;
+
+}
+
+////////////////////////////
+// ADD USER
+////////////////////////////
+function addUser(){
+
+let u=document.getElementById("newUser").value;
+let p=document.getElementById("newPass").value;
+let r=document.getElementById("newRole").value;
+
+users[u]={pass:p,role:r};
+
+saveUsers();
+renderUsers();
+
+alert("تم الإضافة");
+
+}
+
+////////////////////////////
+// DELETE USER
+////////////////////////////
+function deleteUser(u){
+
+if(u==="admin") return;
+
+delete users[u];
+
+saveUsers();
+renderUsers();
+
+}
+
+////////////////////////////
+// SHOW USERS
+////////////////////////////
+function renderUsers(){
+
+let html="";
+
+for(let u in users){
+
+html+=`
+<div>
+<b>${u}</b> - ${users[u].role}
+<button onclick="deleteUser('${u}')">حذف</button>
+</div>
+`;
+
+}
+
+document.getElementById("usersList").innerHTML=html;
+
+}
+
+////////////////////////////
 // DATA
-/////////////////////
+////////////////////////////
 const url="https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv";
 
 let lines=[];
@@ -232,16 +325,13 @@ let res=[];
 
 for(let i=1;i<cache.length;i++){
 
-let c=cache[i].split(";");
 let row=cache[i].toLowerCase();
 
 if(q==="" || row.includes(q)){
 
-res.push({
-a:c[0],b:c[1],c:c[2],d:c[3],e:c[4]
-});
+res.push({row:cache[i]});
 
-if(res.length>=200) break;
+if(res.length>=150) break;
 
 }
 
@@ -259,35 +349,22 @@ worker.onmessage=e=>render(e.data);
 
 }
 
-/////////////////////
+////////////////////////////
 // RENDER
-/////////////////////
+////////////////////////////
 function render(data){
 
-document.getElementById("count").innerHTML=
-"عدد النتائج: "+data.length;
+stats.searches++;
+saveStats();
+renderStats();
 
-let html=`<table>
-<tr>
-<th>المؤهل</th>
-<th>الرقم</th>
-<th>الاسم</th>
-<th>المحافظة</th>
-<th>الجهة</th>
-</tr>`;
+document.getElementById("count").innerHTML="عدد: "+data.length;
+
+let html="<table>";
 
 data.forEach(r=>{
 
-let cls=(r.e||"").includes("داخلية منطقة ( ج )")?"special-row":"";
-
-html+=`
-<tr class="${cls}">
-<td>${r.a||""}</td>
-<td>${r.b||""}</td>
-<td>${r.c||""}</td>
-<td>${r.d||""}</td>
-<td>${r.e||""}</td>
-</tr>`;
+html+=`<tr><td>${r.row}</td></tr>`;
 
 });
 
@@ -297,9 +374,9 @@ document.getElementById("table").innerHTML=html;
 
 }
 
-/////////////////////
+////////////////////////////
 // SEARCH
-/////////////////////
+////////////////////////////
 let t;
 
 document.addEventListener("input",e=>{
@@ -318,9 +395,9 @@ q:document.getElementById("search").value.trim()
 
 });
 
-/////////////////////
+////////////////////////////
 // CLEAR
-/////////////////////
+////////////////////////////
 function clearSearch(){
 
 document.getElementById("search").value="";
