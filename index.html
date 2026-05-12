@@ -5,9 +5,8 @@
 <title>بحث اسطوانة</title>
 
 <style>
-
 body{
-    font-family:Tahoma, Arial;
+    font-family:Tahoma;
     direction:rtl;
     background:#f5f5f5;
     text-align:center;
@@ -16,57 +15,29 @@ body{
     font-weight:bold;
 }
 
-h2{
-    margin-bottom:15px;
-    font-size:42px;
-    font-weight:900;
-    color:#111;
-}
-
-.search-box{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:15px;
-}
+h2{font-size:42px;}
 
 input{
     width:280px;
-    max-width:95%;
     padding:15px;
-    font-size:22px;
+    font-size:20px;
     border-radius:10px;
     border:2px solid #999;
-    font-weight:900;
-    outline:none;
+    font-weight:bold;
 }
 
 button{
     padding:15px 35px;
-    font-size:22px;
+    font-size:20px;
     border:none;
     border-radius:10px;
     cursor:pointer;
-    font-weight:900;
+    font-weight:bold;
     background:#111;
-    color:white;
+    color:#fff;
 }
 
-button:hover{
-    opacity:.9;
-}
-
-.clear-btn{
-    background:#c40000;
-}
-
-#info{
-    margin:15px;
-    font-weight:900;
-    font-size:24px;
-    color:#111;
-}
+.clear-btn{background:#c40000;}
 
 table{
     width:100%;
@@ -77,313 +48,243 @@ table{
 
 th,td{
     border:1px solid #ddd;
-    padding:12px;
-    font-size:20px;
-    font-weight:900;
+    padding:10px;
+    font-size:18px;
+    font-weight:bold;
 }
 
-th{
-    background:#eee;
-    position:sticky;
-    top:0;
-    font-size:22px;
-}
+th{background:#eee;}
 
-/* السجلات الخاصة */
 .special-row td{
     color:red;
-    font-weight:900;
-    font-size:22px;
     background:#fff5f5;
 }
 
-#error{
-    color:red;
-    margin-top:15px;
-    font-size:24px;
-    font-weight:900;
-}
-
-#main{
-    display:none;
-}
-
-.count{
-    color:#008000;
-    font-size:26px;
-    margin-top:10px;
-    font-weight:900;
-}
-
+#main{display:none;}
+#error{color:red;font-size:20px;}
 </style>
 </head>
 
 <body>
 
 <!-- تسجيل الدخول -->
-
 <div id="login">
-
-<h2>🔒 ادخل كلمة السر</h2>
-
+<h2>🔒 تسجيل الدخول</h2>
 <input type="password" id="password" placeholder="كلمة السر">
-
 <br><br>
-
 <button onclick="checkPassword()">دخول</button>
-
 <div id="error"></div>
-
 </div>
 
 <!-- الصفحة -->
-
 <div id="main">
 
 <h2>🔍 بحث اسطوانة</h2>
 
-<div class="search-box">
-
-<input id="nameSearch" placeholder="بحث بالاسم">
-
-<input id="govSearch" placeholder="بحث بالمحافظة">
-
-<input id="numSearch" placeholder="بحث بالرقم الثلاثي">
-
-<input id="entitySearch" placeholder="بحث بالجهة">
-
-<input id="degreeSearch" placeholder="بحث بالمؤهل">
-
-<button class="clear-btn" onclick="clearSearch()">
-مسح البحث
+<button onclick="logout()" style="background:#555;margin-bottom:10px;">
+🚪 خروج
 </button>
 
-</div>
+<br>
+
+<input id="nameSearch" placeholder="الاسم">
+<input id="govSearch" placeholder="المحافظة">
+<input id="numSearch" placeholder="الرقم">
+<input id="entitySearch" placeholder="الجهة">
+<input id="degreeSearch" placeholder="المؤهل">
+
+<button class="clear-btn" onclick="clearSearch()">مسح</button>
 
 <div id="info"></div>
-
-<div class="count" id="count"></div>
-
+<div id="count"></div>
 <div id="table"></div>
 
 </div>
 
 <script>
 
-// كلمة السر
-const PASSWORD = "eh2026";
+const USERS = {
+  "Eh": { pass: "Z2026", time: 60*60*1000 },
+  "mo": { pass: "2026", time: 30*60*1000 },
+  "sh": { pass: "2026", time: 10*60*1000 }
+};
+
+let worker;
+let lines = [];
+
+window.onload = function(){
+
+let session = localStorage.getItem("session");
+
+if(session){
+
+    session = JSON.parse(session);
+
+    let user = USERS[session.user];
+
+    if(user && Date.now() - session.start < user.time){
+
+        document.getElementById("login").style.display = "none";
+        document.getElementById("main").style.display = "block";
+
+        loadData();
+
+    } else {
+        localStorage.removeItem("session");
+    }
+}
+
+}
 
 function checkPassword(){
 
 let pass = document.getElementById("password").value;
 
-if(pass === PASSWORD){
+for(let user in USERS){
 
-    document.getElementById("login").style.display = "none";
-    document.getElementById("main").style.display = "block";
+    if(USERS[user].pass === pass){
 
-    loadData();
+        let session = {
+            user: user,
+            start: Date.now()
+        };
 
-}else{
+        localStorage.setItem("session", JSON.stringify(session));
 
-    document.getElementById("error").innerHTML =
-    "❌ كلمة السر غير صحيحة";
+        document.getElementById("login").style.display = "none";
+        document.getElementById("main").style.display = "block";
+
+        loadData();
+        return;
+    }
+}
+
+document.getElementById("error").innerHTML = "❌ خطأ في كلمة السر";
 
 }
 
+function logout(){
+localStorage.removeItem("session");
+location.reload();
 }
 
-const url =
-"https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv";
-
-let lines = [];
-let worker;
-
-// تحميل البيانات
 function loadData(){
 
-fetch(url)
-.then(r => r.text())
-.then(text => {
+fetch("https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv")
+.then(r=>r.text())
+.then(t=>{
 
-    lines = text.trim().split("\n");
+lines = t.trim().split("\n");
 
-    document.getElementById("info").innerHTML =
-    "تم تحميل: " + (lines.length - 1) + " سجل";
+document.getElementById("info").innerHTML =
+"عدد السجلات: " + (lines.length-1);
 
-    initWorker();
+initWorker();
 
 });
 
 }
 
-// إنشاء Worker
 function initWorker(){
 
 worker = new Worker(URL.createObjectURL(new Blob([`
 
-let cache = [];
+let cache=[];
 
-self.onmessage = function(e){
+self.onmessage=function(e){
 
-    if(e.data.type === "init"){
-        cache = e.data.lines;
-        return;
-    }
+if(e.data.type==="init"){
+cache=e.data.lines;
+return;
+}
 
-    let name = e.data.name;
-    let gov = e.data.gov;
-    let num = e.data.num;
-    let entity = e.data.entity;
-    let degree = e.data.degree;
+let res=[];
 
-    let res = [];
-    let count = 0;
+for(let i=1;i<cache.length;i++){
 
-    for(let i=1;i<cache.length;i++){
+let c=cache[i].split(";");
 
-        let row = cache[i];
-        let c = row.split(";");
+if(
+(c[2]||"").toLowerCase().includes(e.data.name)&&
+(c[3]||"").toLowerCase().includes(e.data.gov)&&
+(c[1]||"").toLowerCase().includes(e.data.num)&&
+(c[4]||"").toLowerCase().includes(e.data.entity)&&
+(c[0]||"").toLowerCase().includes(e.data.degree)
+){
 
-        let a = (c[0] || "").toLowerCase();
-        let b = (c[1] || "").toLowerCase();
-        let cc = (c[2] || "").toLowerCase();
-        let d = (c[3] || "").toLowerCase();
-        let eee = (c[4] || "").toLowerCase();
-
-        if(
-            cc.includes(name) &&
-            d.includes(gov) &&
-            b.includes(num) &&
-            eee.includes(entity) &&
-            a.includes(degree)
-        ){
-
-            res.push({
-                a:c[0]||"",
-                b:c[1]||"",
-                c:c[2]||"",
-                d:c[3]||"",
-                e:c[4]||""
-            });
-
-            count++;
-
-            if(count >= 500) break;
-        }
-    }
-
-    self.postMessage(res);
-};
-
-`], {type:"text/javascript"})));
-
-worker.postMessage({
-    type:"init",
-    lines
+res.push({
+a:c[0],b:c[1],c:c[2],d:c[3],e:c[4]
 });
 
-worker.onmessage = function(e){
-
-    render(e.data);
-
-};
+if(res.length>=500)break;
+}
 
 }
 
-// عرض النتائج
+postMessage(res);
+};
+
+`],{type:"text/javascript"})));
+
+worker.postMessage({type:"init",lines});
+
+worker.onmessage=function(e){render(e.data);};
+
+}
+
 function render(data){
 
 document.getElementById("count").innerHTML =
-"عدد النتائج: " + data.length;
+"عدد النتائج: "+data.length;
 
-let html = `
-<table>
-<tr>
-<th>المؤهل</th>
-<th>الرقم الثلاثي</th>
-<th>الاسم</th>
-<th>المحافظة</th>
-<th>الجهة</th>
-</tr>
-`;
+let html="<table><tr><th>المؤهل</th><th>الرقم</th><th>الاسم</th><th>المحافظة</th><th>الجهة</th></tr>";
 
 data.forEach(r=>{
 
-let rowClass = r.e.includes("داخلية منطقة ( ج )")
-? "special-row"
-: "";
+let cls=r.e.includes("داخلية")?"special-row":"";
 
-html += `
-<tr class="${rowClass}">
+html+=`<tr class="${cls}">
 <td>${r.a}</td>
 <td>${r.b}</td>
 <td>${r.c}</td>
 <td>${r.d}</td>
 <td>${r.e}</td>
-</tr>
-`;
+</tr>`;
 
 });
 
-html += "</table>";
+html+="</table>";
 
-document.getElementById("table").innerHTML = html;
+document.getElementById("table").innerHTML=html;
 
 }
 
-// البحث اللحظي
-let t;
+document.addEventListener("input",()=>{
 
-document.addEventListener("input", function(){
+setTimeout(()=>{
 
-clearTimeout(t);
+worker.postMessage({
+name:nameSearch.value.toLowerCase(),
+gov:govSearch.value.toLowerCase(),
+num:numSearch.value.toLowerCase(),
+entity:entitySearch.value.toLowerCase(),
+degree:degreeSearch.value.toLowerCase()
+});
 
-t = setTimeout(()=>{
-
-    let name =
-    document.getElementById("nameSearch")
-    .value.trim().toLowerCase();
-
-    let gov =
-    document.getElementById("govSearch")
-    .value.trim().toLowerCase();
-
-    let num =
-    document.getElementById("numSearch")
-    .value.trim().toLowerCase();
-
-    let entity =
-    document.getElementById("entitySearch")
-    .value.trim().toLowerCase();
-
-    let degree =
-    document.getElementById("degreeSearch")
-    .value.trim().toLowerCase();
-
-    worker.postMessage({
-        name:name,
-        gov:gov,
-        num:num,
-        entity:entity,
-        degree:degree
-    });
-
-}, 150);
+},150);
 
 });
 
-// مسح البحث
 function clearSearch(){
 
-document.getElementById("nameSearch").value = "";
-document.getElementById("govSearch").value = "";
-document.getElementById("numSearch").value = "";
-document.getElementById("entitySearch").value = "";
-document.getElementById("degreeSearch").value = "";
+nameSearch.value="";
+govSearch.value="";
+numSearch.value="";
+entitySearch.value="";
+degreeSearch.value="";
 
-document.getElementById("table").innerHTML = "";
-document.getElementById("count").innerHTML = "";
+document.getElementById("table").innerHTML="";
+document.getElementById("count").innerHTML="";
 
 }
 
