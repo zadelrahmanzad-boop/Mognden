@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>عرض Excel من GitHub</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Arial; direction: rtl; text-align: center; }
+
+input {
+  padding: 8px;
+  width: 300px;
+  margin: 10px;
+}
+
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 95%;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 6px;
+}
+
+th { background: #eee; }
+</style>
+</head>
+
+<body>
+
+<h2>بحث بيانات الدفع</h2>
+
+<input type="text" id="search" placeholder="بحث عام في كل البيانات...">
+
+<div id="table"></div>
+
+<script>
+
+const url = "https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.xlsx";
+
+let data = [];
+
+fetch(url)
+.then(res => res.arrayBuffer())
+.then(dataBuffer => {
+    let workbook = XLSX.read(dataBuffer, {type:"array"});
+    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+    data = XLSX.utils.sheet_to_json(sheet);
+
+    render(data);
+});
+
+function render(rows){
+    if(!rows.length) return;
+
+    let html = "<table><tr>";
+
+    Object.keys(rows[0]).forEach(h=>{
+        html += "<th>"+h+"</th>";
+    });
+
+    html += "</tr>";
+
+    rows.forEach(r=>{
+        html += "<tr>";
+        Object.values(r).forEach(v=>{
+            html += "<td>"+v+"</td>";
+        });
+        html += "</tr>";
+    });
+
+    html += "</table>";
+
+    document.getElementById("table").innerHTML = html;
+}
+
+document.getElementById("search").addEventListener("keyup", function(){
+    let v = this.value.toLowerCase();
+
+    let filtered = data.filter(row=>{
+        return Object.values(row)
+        .join(" ")
+        .toLowerCase()
+        .includes(v);
+    });
+
+    render(filtered);
+});
+
+</script>
+
+</body>
+</html>
