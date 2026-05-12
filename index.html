@@ -2,75 +2,133 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>عرض Excel من GitHub</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<title>البحث في بيانات الدفع</title>
 
 <style>
-body { font-family: Arial; direction: rtl; text-align: center; }
 
-input {
-  padding: 8px;
-  width: 300px;
-  margin: 10px;
+body{
+    font-family: Arial;
+    direction: rtl;
+    background:#f5f5f5;
+    margin:0;
+    padding:20px;
+    text-align:center;
 }
 
-table {
-  margin: auto;
-  border-collapse: collapse;
-  width: 95%;
+h2{
+    margin-bottom:20px;
 }
 
-th, td {
-  border: 1px solid #333;
-  padding: 6px;
+input{
+    width:320px;
+    max-width:90%;
+    padding:12px;
+    font-size:16px;
+    border:1px solid #ccc;
+    border-radius:8px;
 }
 
-th { background: #eee; }
+#count{
+    margin:15px;
+    font-size:15px;
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:8px;
+    font-size:14px;
+}
+
+th{
+    background:#ececec;
+    position:sticky;
+    top:0;
+}
+
+tr:nth-child(even){
+    background:#fafafa;
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>بحث بيانات الدفع</h2>
+<h2>البحث في البيانات</h2>
 
-<input type="text" id="search" placeholder="بحث عام في كل البيانات...">
+<input type="text" id="search"
+placeholder="ابحث بالاسم أو المحافظة أو الجهة">
+
+<div id="count"></div>
 
 <div id="table"></div>
 
 <script>
 
-const url = "https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.xlsx";
+const url =
+"https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv";
 
 let data = [];
 
 fetch(url)
-.then(res => res.arrayBuffer())
-.then(dataBuffer => {
-    let workbook = XLSX.read(dataBuffer, {type:"array"});
-    let sheet = workbook.Sheets[workbook.SheetNames[0]];
-    data = XLSX.utils.sheet_to_json(sheet);
+.then(r => r.text())
+.then(text => {
 
-    render(data);
+    const rows = text.trim().split("\n");
+
+    data = rows.slice(1).map(row => {
+
+        const c = row.split(",");
+
+        return {
+            المؤهل: c[0] || "",
+            الرقم_الثلاثي: c[2] || "",
+            الاسم: c[3] || "",
+            المحافظه: c[4] || "",
+            الجهه: c[5] || ""
+        };
+
+    });
+
+    render(data.slice(0,200));
+
 });
 
 function render(rows){
-    if(!rows.length) return;
 
-    let html = "<table><tr>";
+    document.getElementById("count").innerHTML =
+    "عدد النتائج: " + rows.length;
 
-    Object.keys(rows[0]).forEach(h=>{
-        html += "<th>"+h+"</th>";
-    });
+    let html = `
+    <table>
+    <tr>
+        <th>المؤهل</th>
+        <th>الرقم الثلاثي</th>
+        <th>الاسم</th>
+        <th>المحافظة</th>
+        <th>الجهة</th>
+    </tr>
+    `;
 
-    html += "</tr>";
+    rows.forEach(r => {
 
-    rows.forEach(r=>{
-        html += "<tr>";
-        Object.values(r).forEach(v=>{
-            html += "<td>"+v+"</td>";
-        });
-        html += "</tr>";
+        html += `
+        <tr>
+            <td>${r.المؤهل}</td>
+            <td>${r.الرقم_الثلاثي}</td>
+            <td>${r.الاسم}</td>
+            <td>${r.المحافظه}</td>
+            <td>${r.الجهه}</td>
+        </tr>
+        `;
+
     });
 
     html += "</table>";
@@ -78,17 +136,28 @@ function render(rows){
     document.getElementById("table").innerHTML = html;
 }
 
-document.getElementById("search").addEventListener("keyup", function(){
-    let v = this.value.toLowerCase();
+document.getElementById("search")
+.addEventListener("input", function(){
 
-    let filtered = data.filter(row=>{
-        return Object.values(row)
-        .join(" ")
-        .toLowerCase()
-        .includes(v);
-    });
+    const v = this.value.toLowerCase().trim();
+
+    if(v.length < 2){
+        render(data.slice(0,200));
+        return;
+    }
+
+    const filtered = data.filter(r =>
+
+        r.الاسم.toLowerCase().includes(v) ||
+        r.المحافظه.toLowerCase().includes(v) ||
+        r.الجهه.toLowerCase().includes(v) ||
+        r.الرقم_الثلاثي.toLowerCase().includes(v) ||
+        r.المؤهل.toLowerCase().includes(v)
+
+    ).slice(0,500);
 
     render(filtered);
+
 });
 
 </script>
