@@ -32,7 +32,7 @@ h2{
 }
 
 input{
-    width:300px;
+    width:280px;
     max-width:95%;
     padding:15px;
     font-size:22px;
@@ -44,13 +44,21 @@ input{
 
 button{
     padding:15px 35px;
-    font-size:24px;
+    font-size:22px;
     border:none;
     border-radius:10px;
     cursor:pointer;
     font-weight:900;
     background:#111;
     color:white;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.clear-btn{
+    background:#c40000;
 }
 
 #info{
@@ -112,7 +120,7 @@ th{
 
 <body>
 
-<!-- شاشة تسجيل الدخول -->
+<!-- تسجيل الدخول -->
 
 <div id="login">
 
@@ -128,7 +136,7 @@ th{
 
 </div>
 
-<!-- الصفحة الأساسية -->
+<!-- الصفحة -->
 
 <div id="main">
 
@@ -145,6 +153,10 @@ th{
 <input id="entitySearch" placeholder="بحث بالجهة">
 
 <input id="degreeSearch" placeholder="بحث بالمؤهل">
+
+<button class="clear-btn" onclick="clearSearch()">
+مسح البحث
+</button>
 
 </div>
 
@@ -205,6 +217,7 @@ fetch(url)
 
 }
 
+// إنشاء Worker
 function initWorker(){
 
 worker = new Worker(URL.createObjectURL(new Blob([`
@@ -232,11 +245,11 @@ self.onmessage = function(e){
         let row = cache[i];
         let c = row.split(";");
 
-        let a = (c[0] || "").toLowerCase(); // المؤهل
-        let b = (c[1] || "").toLowerCase(); // الرقم
-        let cc = (c[2] || "").toLowerCase(); // الاسم
-        let d = (c[3] || "").toLowerCase(); // المحافظة
-        let eee = (c[4] || "").toLowerCase(); // الجهة
+        let a = (c[0] || "").toLowerCase();
+        let b = (c[1] || "").toLowerCase();
+        let cc = (c[2] || "").toLowerCase();
+        let d = (c[3] || "").toLowerCase();
+        let eee = (c[4] || "").toLowerCase();
 
         if(
             cc.includes(name) &&
@@ -256,7 +269,7 @@ self.onmessage = function(e){
 
             count++;
 
-            if(count >= 300) break;
+            if(count >= 500) break;
         }
     }
 
@@ -278,6 +291,7 @@ worker.onmessage = function(e){
 
 }
 
+// عرض النتائج
 function render(data){
 
 document.getElementById("count").innerHTML =
@@ -318,7 +332,7 @@ document.getElementById("table").innerHTML = html;
 
 }
 
-// فلترة لحظية
+// البحث اللحظي
 let t;
 
 document.addEventListener("input", function(){
@@ -358,6 +372,20 @@ t = setTimeout(()=>{
 }, 150);
 
 });
+
+// مسح البحث
+function clearSearch(){
+
+document.getElementById("nameSearch").value = "";
+document.getElementById("govSearch").value = "";
+document.getElementById("numSearch").value = "";
+document.getElementById("entitySearch").value = "";
+document.getElementById("degreeSearch").value = "";
+
+document.getElementById("table").innerHTML = "";
+document.getElementById("count").innerHTML = "";
+
+}
 
 </script>
 
