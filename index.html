@@ -2,58 +2,48 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>البحث في بيانات الدفع</title>
+<title>بحث سريع جدا</title>
 
 <style>
 
 body{
-    font-family: Arial;
-    direction: rtl;
+    font-family:Arial;
+    direction:rtl;
     background:#f5f5f5;
+    text-align:center;
     margin:0;
     padding:20px;
-    text-align:center;
-}
-
-h2{
-    margin-bottom:20px;
 }
 
 input{
-    width:320px;
+    width:350px;
     max-width:90%;
     padding:12px;
     font-size:16px;
-    border:1px solid #ccc;
     border-radius:8px;
-}
-
-#count{
-    margin:15px;
-    font-size:15px;
-    font-weight:bold;
+    border:1px solid #ccc;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
     background:white;
+    margin-top:20px;
 }
 
 th,td{
     border:1px solid #ddd;
-    padding:8px;
+    padding:7px;
     font-size:14px;
 }
 
 th{
     background:#ececec;
-    position:sticky;
-    top:0;
 }
 
-tr:nth-child(even){
-    background:#fafafa;
+#count{
+    margin-top:15px;
+    font-weight:bold;
 }
 
 </style>
@@ -63,8 +53,9 @@ tr:nth-child(even){
 
 <h2>البحث في البيانات</h2>
 
-<input type="text" id="search"
-placeholder="ابحث بالاسم أو المحافظة أو الجهة">
+<input type="text"
+id="search"
+placeholder="اكتب للبحث">
 
 <div id="count"></div>
 
@@ -75,36 +66,28 @@ placeholder="ابحث بالاسم أو المحافظة أو الجهة">
 const url =
 "https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv";
 
-let data = [];
+let lines = [];
 
 fetch(url)
 .then(r => r.text())
 .then(text => {
 
-    const rows = text.trim().split("\n");
+    lines = text.split("\n");
 
-    data = rows.slice(1).map(row => {
-
-        const c = row.split(",");
-
-        return {
-            المؤهل: c[0] || "",
-            الرقم_الثلاثي: c[2] || "",
-            الاسم: c[3] || "",
-            المحافظه: c[4] || "",
-            الجهه: c[5] || ""
-        };
-
-    });
-
-    render(data.slice(0,200));
+    document.getElementById("count").innerHTML =
+    "تم تحميل البيانات: " + (lines.length - 1);
 
 });
 
-function render(rows){
+document.getElementById("search")
+.addEventListener("input", function(){
 
-    document.getElementById("count").innerHTML =
-    "عدد النتائج: " + rows.length;
+    let q = this.value.trim().toLowerCase();
+
+    if(q.length < 2){
+        document.getElementById("table").innerHTML = "";
+        return;
+    }
 
     let html = `
     <table>
@@ -117,46 +100,40 @@ function render(rows){
     </tr>
     `;
 
-    rows.forEach(r => {
+    let found = 0;
 
-        html += `
-        <tr>
-            <td>${r.المؤهل}</td>
-            <td>${r.الرقم_الثلاثي}</td>
-            <td>${r.الاسم}</td>
-            <td>${r.المحافظه}</td>
-            <td>${r.الجهه}</td>
-        </tr>
-        `;
+    for(let i = 1; i < lines.length; i++){
 
-    });
+        let row = lines[i];
+
+        if(row.toLowerCase().includes(q)){
+
+            let c = row.split(",");
+
+            html += `
+            <tr>
+                <td>${c[0] || ""}</td>
+                <td>${c[2] || ""}</td>
+                <td>${c[3] || ""}</td>
+                <td>${c[4] || ""}</td>
+                <td>${c[5] || ""}</td>
+            </tr>
+            `;
+
+            found++;
+
+            // حد أقصى للنتائج
+            if(found >= 100)
+                break;
+        }
+    }
 
     html += "</table>";
 
+    document.getElementById("count").innerHTML =
+    "عدد النتائج: " + found;
+
     document.getElementById("table").innerHTML = html;
-}
-
-document.getElementById("search")
-.addEventListener("input", function(){
-
-    const v = this.value.toLowerCase().trim();
-
-    if(v.length < 2){
-        render(data.slice(0,200));
-        return;
-    }
-
-    const filtered = data.filter(r =>
-
-        r.الاسم.toLowerCase().includes(v) ||
-        r.المحافظه.toLowerCase().includes(v) ||
-        r.الجهه.toLowerCase().includes(v) ||
-        r.الرقم_الثلاثي.toLowerCase().includes(v) ||
-        r.المؤهل.toLowerCase().includes(v)
-
-    ).slice(0,500);
-
-    render(filtered);
 
 });
 
