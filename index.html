@@ -15,20 +15,21 @@ body{
     font-weight:bold;
 }
 
-h2{font-size:42px;}
+h2{font-size:40px;}
 
 input{
-    width:280px;
-    padding:15px;
-    font-size:20px;
+    width:260px;
+    padding:12px;
+    margin:5px;
+    font-size:18px;
     border-radius:10px;
     border:2px solid #999;
     font-weight:bold;
 }
 
 button{
-    padding:15px 35px;
-    font-size:20px;
+    padding:12px 25px;
+    font-size:18px;
     border:none;
     border-radius:10px;
     cursor:pointer;
@@ -39,18 +40,20 @@ button{
 
 .clear-btn{background:#c40000;}
 
+#main{display:none;}
+#error{color:red;margin-top:10px;}
+
 table{
     width:100%;
     border-collapse:collapse;
-    background:white;
     margin-top:20px;
+    background:white;
 }
 
 th,td{
     border:1px solid #ddd;
     padding:10px;
-    font-size:18px;
-    font-weight:bold;
+    font-size:16px;
 }
 
 th{background:#eee;}
@@ -60,32 +63,29 @@ th{background:#eee;}
     background:#fff5f5;
 }
 
-#main{display:none;}
-#error{color:red;font-size:20px;}
+.count{margin-top:10px;font-size:18px;color:green;}
 </style>
 </head>
 
 <body>
 
-<!-- تسجيل الدخول -->
+<!-- LOGIN -->
 <div id="login">
 <h2>🔒 تسجيل الدخول</h2>
 <input type="password" id="password" placeholder="كلمة السر">
-<br><br>
+<br>
 <button onclick="checkPassword()">دخول</button>
 <div id="error"></div>
 </div>
 
-<!-- الصفحة -->
+<!-- MAIN -->
 <div id="main">
 
 <h2>🔍 بحث اسطوانة</h2>
 
-<button onclick="logout()" style="background:#555;margin-bottom:10px;">
-🚪 خروج
-</button>
+<button onclick="logout()">🚪 خروج</button>
 
-<br>
+<br><br>
 
 <input id="nameSearch" placeholder="الاسم">
 <input id="govSearch" placeholder="المحافظة">
@@ -96,7 +96,7 @@ th{background:#eee;}
 <button class="clear-btn" onclick="clearSearch()">مسح</button>
 
 <div id="info"></div>
-<div id="count"></div>
+<div class="count" id="count"></div>
 <div id="table"></div>
 
 </div>
@@ -106,27 +106,26 @@ th{background:#eee;}
 const USERS = {
   "Eh": { pass: "Z2026", time: 60*60*1000 },
   "mo": { pass: "2026", time: 30*60*1000 },
-  "sh": { pass: "2026", time: 10*60*1000 }
+  "mo": { pass: "2026", time: 10*60*1000 }
 };
 
 let worker;
 let lines = [];
 
+/* ===== CHECK SESSION ===== */
 window.onload = function(){
 
-let session = localStorage.getItem("session");
+let s = localStorage.getItem("session");
 
-if(session){
+if(s){
 
-    session = JSON.parse(session);
+    s = JSON.parse(s);
 
-    let user = USERS[session.user];
+    let u = USERS[s.user];
 
-    if(user && Date.now() - session.start < user.time){
+    if(u && Date.now() - s.start < u.time){
 
-        document.getElementById("login").style.display = "none";
-        document.getElementById("main").style.display = "block";
-
+        showMain();
         loadData();
 
     } else {
@@ -136,24 +135,21 @@ if(session){
 
 }
 
+/* ===== LOGIN ===== */
 function checkPassword(){
 
 let pass = document.getElementById("password").value;
 
-for(let user in USERS){
+for(let u in USERS){
 
-    if(USERS[user].pass === pass){
+    if(USERS[u].pass === pass){
 
-        let session = {
-            user: user,
-            start: Date.now()
-        };
+        localStorage.setItem("session", JSON.stringify({
+            user:u,
+            start:Date.now()
+        }));
 
-        localStorage.setItem("session", JSON.stringify(session));
-
-        document.getElementById("login").style.display = "none";
-        document.getElementById("main").style.display = "block";
-
+        showMain();
         loadData();
         return;
     }
@@ -163,11 +159,19 @@ document.getElementById("error").innerHTML = "❌ خطأ في كلمة السر"
 
 }
 
+/* ===== SHOW MAIN ===== */
+function showMain(){
+document.getElementById("login").style.display="none";
+document.getElementById("main").style.display="block";
+}
+
+/* ===== LOGOUT ===== */
 function logout(){
 localStorage.removeItem("session");
 location.reload();
 }
 
+/* ===== LOAD DATA ===== */
 function loadData(){
 
 fetch("https://raw.githubusercontent.com/zadelrahmanzad-boop/Mognden/main/الدفع.csv")
@@ -185,6 +189,7 @@ initWorker();
 
 }
 
+/* ===== WORKER ===== */
 function initWorker(){
 
 worker = new Worker(URL.createObjectURL(new Blob([`
@@ -204,19 +209,25 @@ for(let i=1;i<cache.length;i++){
 
 let c=cache[i].split(";");
 
+let degree=(c[0]||"").toLowerCase();
+let num=(c[1]||"").toLowerCase();
+let name=(c[2]||"").toLowerCase();
+let gov=(c[3]||"").toLowerCase();
+let entity=(c[4]||"").toLowerCase();
+
 if(
-(c[2]||"").toLowerCase().includes(e.data.name)&&
-(c[3]||"").toLowerCase().includes(e.data.gov)&&
-(c[1]||"").toLowerCase().includes(e.data.num)&&
-(c[4]||"").toLowerCase().includes(e.data.entity)&&
-(c[0]||"").toLowerCase().includes(e.data.degree)
+name.includes(e.data.name) &&
+gov.includes(e.data.gov) &&
+num.includes(e.data.num) &&
+entity.includes(e.data.entity) &&
+degree.includes(e.data.degree)
 ){
 
 res.push({
 a:c[0],b:c[1],c:c[2],d:c[3],e:c[4]
 });
 
-if(res.length>=500)break;
+if(res.length>=500) break;
 }
 
 }
@@ -228,53 +239,69 @@ postMessage(res);
 
 worker.postMessage({type:"init",lines});
 
-worker.onmessage=function(e){render(e.data);};
+worker.onmessage = e => render(e.data);
 
 }
 
-function render(data){
-
-document.getElementById("count").innerHTML =
-"عدد النتائج: "+data.length;
-
-let html="<table><tr><th>المؤهل</th><th>الرقم</th><th>الاسم</th><th>المحافظة</th><th>الجهة</th></tr>";
-
-data.forEach(r=>{
-
-let cls=r.e.includes("داخلية")?"special-row":"";
-
-html+=`<tr class="${cls}">
-<td>${r.a}</td>
-<td>${r.b}</td>
-<td>${r.c}</td>
-<td>${r.d}</td>
-<td>${r.e}</td>
-</tr>`;
-
-});
-
-html+="</table>";
-
-document.getElementById("table").innerHTML=html;
-
-}
-
+/* ===== SEARCH ===== */
 document.addEventListener("input",()=>{
+
+if(!worker) return;
 
 setTimeout(()=>{
 
 worker.postMessage({
-name:nameSearch.value.toLowerCase(),
-gov:govSearch.value.toLowerCase(),
-num:numSearch.value.toLowerCase(),
-entity:entitySearch.value.toLowerCase(),
-degree:degreeSearch.value.toLowerCase()
+name: (nameSearch.value||"").toLowerCase(),
+gov: (govSearch.value||"").toLowerCase(),
+num: (numSearch.value||"").toLowerCase(),
+entity: (entitySearch.value||"").toLowerCase(),
+degree: (degreeSearch.value||"").toLowerCase()
 });
 
 },150);
 
 });
 
+/* ===== RENDER ===== */
+function render(data){
+
+document.getElementById("count").innerHTML =
+"عدد النتائج: " + data.length;
+
+let html = `
+<table>
+<tr>
+<th>المؤهل</th>
+<th>الرقم</th>
+<th>الاسم</th>
+<th>المحافظة</th>
+<th>الجهة</th>
+</tr>
+`;
+
+data.forEach(r=>{
+
+let cls = r.e.includes("داخلية") ? "special-row" : "";
+
+html += `
+<tr class="${cls}">
+<td>${r.a}</td>
+<td>${r.b}</td>
+<td>${r.c}</td>
+<td>${r.d}</td>
+<td>${r.e}</td>
+</tr>
+`;
+
+});
+
+html += "</table>";
+
+document.getElementById("table").innerHTML = html;
+
+}
+
+/* ===== CLEAR ===== */
 function clearSearch(){
 
 nameSearch.value="";
