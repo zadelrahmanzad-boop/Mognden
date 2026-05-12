@@ -23,16 +23,23 @@ h2{
     color:#111;
 }
 
+.search-box{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:15px;
+}
+
 input{
-    width:450px;
+    width:300px;
     max-width:95%;
     padding:15px;
-    font-size:24px;
+    font-size:22px;
     border-radius:10px;
     border:2px solid #999;
     font-weight:900;
     outline:none;
-    margin:8px;
 }
 
 button{
@@ -93,6 +100,13 @@ th{
     display:none;
 }
 
+.count{
+    color:#008000;
+    font-size:26px;
+    margin-top:10px;
+    font-weight:900;
+}
+
 </style>
 </head>
 
@@ -106,7 +120,7 @@ th{
 
 <input type="password" id="password" placeholder="كلمة السر">
 
-<br>
+<br><br>
 
 <button onclick="checkPassword()">دخول</button>
 
@@ -120,9 +134,23 @@ th{
 
 <h2>🔍 بحث اسطوانة</h2>
 
-<input id="search" placeholder="ابحث (اسم - محافظة - جهة - رقم ثلاثي)">
+<div class="search-box">
+
+<input id="nameSearch" placeholder="بحث بالاسم">
+
+<input id="govSearch" placeholder="بحث بالمحافظة">
+
+<input id="numSearch" placeholder="بحث بالرقم الثلاثي">
+
+<input id="entitySearch" placeholder="بحث بالجهة">
+
+<input id="degreeSearch" placeholder="بحث بالمؤهل">
+
+</div>
 
 <div id="info"></div>
+
+<div class="count" id="count"></div>
 
 <div id="table"></div>
 
@@ -190,17 +218,33 @@ self.onmessage = function(e){
         return;
     }
 
-    let q = e.data.query;
+    let name = e.data.name;
+    let gov = e.data.gov;
+    let num = e.data.num;
+    let entity = e.data.entity;
+    let degree = e.data.degree;
+
     let res = [];
     let count = 0;
 
     for(let i=1;i<cache.length;i++){
 
         let row = cache[i];
+        let c = row.split(";");
 
-        if(row.toLowerCase().includes(q)){
+        let a = (c[0] || "").toLowerCase(); // المؤهل
+        let b = (c[1] || "").toLowerCase(); // الرقم
+        let cc = (c[2] || "").toLowerCase(); // الاسم
+        let d = (c[3] || "").toLowerCase(); // المحافظة
+        let eee = (c[4] || "").toLowerCase(); // الجهة
 
-            let c = row.split(";");
+        if(
+            cc.includes(name) &&
+            d.includes(gov) &&
+            b.includes(num) &&
+            eee.includes(entity) &&
+            a.includes(degree)
+        ){
 
             res.push({
                 a:c[0]||"",
@@ -212,7 +256,7 @@ self.onmessage = function(e){
 
             count++;
 
-            if(count >= 150) break;
+            if(count >= 300) break;
         }
     }
 
@@ -235,6 +279,9 @@ worker.onmessage = function(e){
 }
 
 function render(data){
+
+document.getElementById("count").innerHTML =
+"عدد النتائج: " + data.length;
 
 let html = `
 <table>
@@ -271,31 +318,44 @@ document.getElementById("table").innerHTML = html;
 
 }
 
-// بحث لحظي
+// فلترة لحظية
 let t;
 
-document.addEventListener("input", function(e){
-
-if(e.target.id !== "search") return;
+document.addEventListener("input", function(){
 
 clearTimeout(t);
 
-let q = e.target.value.trim().toLowerCase();
-
-if(q.length < 2){
-
-    document.getElementById("table").innerHTML = "";
-    return;
-
-}
-
 t = setTimeout(()=>{
 
+    let name =
+    document.getElementById("nameSearch")
+    .value.trim().toLowerCase();
+
+    let gov =
+    document.getElementById("govSearch")
+    .value.trim().toLowerCase();
+
+    let num =
+    document.getElementById("numSearch")
+    .value.trim().toLowerCase();
+
+    let entity =
+    document.getElementById("entitySearch")
+    .value.trim().toLowerCase();
+
+    let degree =
+    document.getElementById("degreeSearch")
+    .value.trim().toLowerCase();
+
     worker.postMessage({
-        query:q
+        name:name,
+        gov:gov,
+        num:num,
+        entity:entity,
+        degree:degree
     });
 
-}, 200);
+}, 150);
 
 });
 
