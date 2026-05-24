@@ -199,12 +199,37 @@
             transition: all 0.3s;
         }
         .filter-box:hover { border-color: #888; }
-        .filter-box label {
-            display: block;
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
+        }
+        .filter-header label {
             color: #111;
             font-weight: 800;
             font-size: clamp(0.85rem, 2vw, 0.95rem);
+        }
+        .close-filter-btn {
+            background: #eee;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            color: #444;
+            cursor: pointer;
+            font-size: 0.85rem;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .close-filter-btn:hover {
+            background: #333;
+            color: #fff;
+            border-color: #333;
         }
         .filter-row {
             display: flex;
@@ -460,8 +485,9 @@
                      إظهار  (الثقافي)
                 </label>
             </div>
-            <div style="text-align:center; margin-top:10px;">
+            <div style="text-align:center; margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                 <button class="clear-btn" style="padding:14px 32px; font-size:1.1rem;" onclick="clearAll()">🗑️ مسح كل الفلاتر</button>
+                <button class="clear-btn" style="padding:14px 32px; font-size:1.1rem;" onclick="showAllFilters()">👁️ إظهار كل حقول البحث</button>
             </div>
         </div>
 
@@ -894,8 +920,11 @@
             searchFields.forEach(function(field) {
                 if (!columnMap[field.key]) return;
 
-                html += '<div class="filter-box">' +
-                    '<label>' + field.label + '</label>' +
+                html += '<div class="filter-box" id="filter_box_' + field.key + '">' +
+                    '<div class="filter-header">' +
+                        '<label>' + field.label + '</label>' +
+                        '<button class="close-filter-btn" onclick="closeFilterBox(\'' + field.key + '\')" title="إغلاق الحقل">✕</button>' +
+                    '</div>' +
                     '<div class="filter-row">' +
                         '<select id="mode_' + field.key + '" onchange="triggerSearch()">' +
                             '<option value="contains">يحتوي</option>' +
@@ -904,12 +933,31 @@
                             '<option value="equals">يساوي</option>' +
                         '</select>' +
                         '<input type="text" id="search_' + field.key + '" placeholder="' + field.placeholder + '" oninput="debouncedSearch()">' +
-                        '<button class="clear-btn" onclick="clearField(\'' + field.key + '\')">✕</button>' +
+                        '<button class="clear-btn" onclick="clearField(\'' + field.key + '\')">🗑️</button>' +
                     '</div>' +
                 '</div>';
             });
 
             grid.innerHTML = html;
+        }
+
+        function closeFilterBox(key) {
+            const box = document.getElementById('filter_box_' + key);
+            if (box) {
+                box.style.display = 'none';
+                // Also clear its value so it doesn't affect search
+                const input = document.getElementById('search_' + key);
+                if (input) input.value = '';
+                triggerSearch();
+            }
+        }
+
+        function showAllFilters() {
+            searchFields.forEach(function(field) {
+                if (!columnMap[field.key]) return;
+                const box = document.getElementById('filter_box_' + field.key);
+                if (box) box.style.display = '';
+            });
         }
 
         function debouncedSearch() {
