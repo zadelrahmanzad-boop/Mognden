@@ -1,1184 +1,1034 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استعلام ذكى</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            background: #f0f0f0;
-            min-height: 100vh;
-            color: #222;
-            padding: 15px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: clamp(1.6rem, 4vw, 2.4rem);
-            color: #111;
-            white-space: nowrap;
-            font-weight: 800;
-        }
-        .upload-section, .mapping-section, .search-section, .results-section, .files-info {
-            background: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .upload-section {
-            text-align: center;
-            border: 2px dashed #999;
-            transition: all 0.3s;
-            position: relative;
-        }
-        .upload-section:hover, .upload-section.dragover {
-            border-color: #444;
-            background: #fafafa;
-        }
-        .upload-section input[type="file"] { display: none; }
-        .upload-btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: #333;
-            color: #fff;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
-            font-weight: 700;
-            transition: all 0.3s;
-            margin: 5px;
-            border: none;
-            white-space: nowrap;
-        }
-        .upload-btn:hover { background: #111; }
-        .drag-text {
-            margin-top: 12px;
-            color: #666;
-            font-size: clamp(0.8rem, 2vw, 1rem);
-            font-weight: 600;
-        }
-        .mapping-section {
-            display: none;
-            border: 2px solid #777;
-        }
-        .mapping-section h3 {
-            color: #111;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: clamp(1.2rem, 3vw, 1.4rem);
-            font-weight: 800;
-        }
-        .mapping-section p {
-            text-align: center;
-            color: #444;
-            margin-bottom: 15px;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-            font-weight: 600;
-        }
-        .mapping-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-        .map-item {
-            background: #f8f8f8;
-            border-radius: 8px;
-            padding: 14px;
-            border: 1px solid #ddd;
-        }
-        .map-item label {
-            display: block;
-            color: #111;
-            font-weight: 800;
-            margin-bottom: 8px;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-        }
-        .map-item select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #bbb;
-            border-radius: 6px;
-            background: #fff;
-            color: #222;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .map-item select:focus { outline: none; border-color: #444; }
-        .map-item select option {
-            background: #fff;
-            color: #222;
-            font-weight: 600;
-        }
-        .btn-confirm {
-            display: block;
-            width: 100%;
-            max-width: 320px;
-            margin: 0 auto;
-            padding: 16px;
-            background: #333;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: clamp(1rem, 2.5vw, 1.2rem);
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-confirm:hover { background: #111; }
-        .files-info { display: none; }
-        .files-info h3 {
-            color: #111;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 8px;
-            font-size: clamp(1.1rem, 2.5vw, 1.3rem);
-            font-weight: 800;
-        }
-        .file-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 10px;
-        }
-        .file-item {
-            background: #f8f8f8;
-            border-radius: 6px;
-            padding: 12px 16px;
-            border: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .file-item .name {
-            color: #222;
-            font-weight: 700;
-            font-size: clamp(0.85rem, 2vw, 0.95rem);
-            word-break: break-all;
-        }
-        .file-item .count {
-            color: #555;
-            font-size: clamp(0.8rem, 2vw, 0.9rem);
-            white-space: nowrap;
-            font-weight: 700;
-        }
-        .total-badge {
-            display: inline-block;
-            background: #333;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 800;
-            margin-top: 12px;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-        }
-        .search-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-bottom: 12px;
-        }
-        .filter-box {
-            background: #f8f8f8;
-            border-radius: 8px;
-            padding: 14px;
-            border: 1px solid #ddd;
-            transition: all 0.3s;
-        }
-        .filter-box:hover { border-color: #888; }
-        .filter-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .filter-header label {
-            color: #111;
-            font-weight: 800;
-            font-size: clamp(0.85rem, 2vw, 0.95rem);
-        }
-        .close-filter-btn {
-            background: #eee;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            color: #444;
-            cursor: pointer;
-            font-size: 0.85rem;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        .close-filter-btn:hover {
-            background: #333;
-            color: #fff;
-            border-color: #333;
-        }
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            align-items: stretch;
-        }
-        .filter-row select {
-            width: 95px;
-            padding: 10px;
-            border: 2px solid #bbb;
-            border-radius: 6px;
-            background: #fff;
-            color: #222;
-            font-size: clamp(0.75rem, 2vw, 0.85rem);
-            cursor: pointer;
-            flex-shrink: 0;
-            font-weight: 700;
-        }
-        .filter-row select:focus { outline: none; border-color: #444; }
-        .filter-row select option { background: #fff; color: #222; font-weight: 600; }
-        .filter-row input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 2px solid #bbb;
-            border-radius: 6px;
-            background: #fff;
-            color: #222;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-            transition: all 0.3s;
-            min-width: 0;
-            font-weight: 600;
-        }
-        .filter-row input:focus { outline: none; border-color: #444; }
-        .filter-row input::placeholder { color: #888; font-weight: 500; }
-        .clear-btn {
-            padding: 10px 14px;
-            background: #eee;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            color: #444;
-            cursor: pointer;
-            font-size: clamp(0.75rem, 2vw, 0.85rem);
-            transition: all 0.3s;
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-weight: 700;
-        }
-        .clear-btn:hover { background: #ddd; color: #111; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>عرض وبحث ملفات CSV</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f4f6f8;
+    color: #222;
+    font-size: 18px;
+  }
 
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            padding: 12px 16px;
-            background: #f8f8f8;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            flex-wrap: wrap;
-        }
-        .toggle-row label {
-            color: #222;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: clamp(0.9rem, 2vw, 1.1rem);
-        }
-        .toggle-row input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #333;
-            flex-shrink: 0;
-        }
+  h2 {
+    text-align: center;
+    margin: 0 0 24px 0;
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: 0.5px;
+  }
 
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .stats span {
-            background: #eee;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-size: clamp(0.8rem, 2vw, 0.95rem);
-            border: 1px solid #ccc;
-            white-space: nowrap;
-            font-weight: 700;
-        }
-        .stats .live-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #222;
-        }
-        .pulse {
-            width: 10px; height: 10px;
-            background: #333;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
+  /* ===== Profile Badge ===== */
+  .profile-badge {
+    display: inline-block;
+    background: #2c3e50;
+    color: #fff;
+    padding: 6px 18px;
+    border-radius: 24px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+  }
 
-        .scroll-proxy-wrapper { margin-bottom: 5px; }
-        .scroll-proxy {
-            overflow-x: auto;
-            overflow-y: hidden;
-            height: 18px;
-            background: #e8e8e8;
-            border: 1px solid #ccc;
-            border-radius: 6px 6px 0 0;
-        }
-        .scroll-proxy-content { height: 1px; }
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            border-radius: 0 0 6px 6px;
-            border: 1px solid #ccc;
-            border-top: none;
-            -webkit-overflow-scrolling: touch;
-        }
-        table {
-            width: 100%;
-            min-width: 800px;
-            border-collapse: collapse;
-            font-size: clamp(0.85rem, 2vw, 0.95rem);
-        }
-        th, td {
-            padding: 12px 14px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
-            white-space: nowrap;
-            font-weight: 600;
-        }
-        th {
-            background: #e8e8e8;
-            color: #111;
-            font-weight: 800;
-            position: sticky;
-            top: 0;
-        }
-        tr:hover { background: #f5f5f5; }
-        tr:nth-child(even) { background: #fafafa; }
-        tr:nth-child(even):hover { background: #f0f0f0; }
+  .profile-row {
+    text-align: center;
+    margin-bottom: 14px;
+  }
 
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .pagination button {
-            padding: 10px 16px;
-            background: #eee;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            color: #222;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: clamp(0.8rem, 2vw, 0.95rem);
-            min-width: 40px;
-            font-weight: 700;
-        }
-        .pagination button:hover:not(:disabled) {
-            background: #333;
-            color: #fff;
-            font-weight: 800;
-        }
-        .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
-        .pagination .page-active {
-            background: #333 !important;
-            color: #fff !important;
-            font-weight: 800;
-        }
-        .no-results {
-            text-align: center;
-            padding: 40px 20px;
-            color: #555;
-            font-size: clamp(1.1rem, 3vw, 1.3rem);
-            font-weight: 700;
-        }
-        .highlight {
-            background: #ffeb3b;
-            color: #000;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: 800;
-        }
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: #e0e0e0; }
-        ::-webkit-scrollbar-thumb { background: #777; border-radius: 5px; }
+  /* ===== Toolbar ===== */
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .toolbar input, .toolbar select, .toolbar button {
+    padding: 12px 18px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 18px;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.15s;
+    font-weight: 600;
+  }
+  .toolbar button {
+    background: #f8f9fa;
+    color: #333;
+    font-weight: 700;
+  }
+  .toolbar button:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+  .toolbar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .toolbar button.primary {
+    background: #2c3e50;
+    color: #fff;
+    border-color: #2c3e50;
+  }
+  .toolbar button.primary:hover:not(:disabled) {
+    background: #1a252f;
+  }
+  .toolbar button.danger {
+    background: #c0392b;
+    color: #fff;
+    border-color: #c0392b;
+  }
+  .toolbar button.danger:hover:not(:disabled) {
+    background: #a93226;
+  }
 
-        @media (max-width: 768px) {
-            body { padding: 10px; font-size: 14px; }
-            .upload-section, .mapping-section, .search-section, .results-section, .files-info {
-                padding: 15px;
-                border-radius: 6px;
-            }
-            .mapping-grid { grid-template-columns: 1fr; }
-            .file-list { grid-template-columns: 1fr; }
-            .search-grid { grid-template-columns: 1fr; }
-            .filter-row { flex-wrap: nowrap; }
-            .filter-row select { width: 85px; padding: 8px; }
-            .stats { justify-content: center; }
-            .stats span { padding: 8px 14px; font-size: 0.8rem; }
-            table { min-width: 600px; }
-            th, td { padding: 10px 12px; font-size: 0.85rem; }
-        }
-        @media (max-width: 480px) {
-            .upload-btn { display: block; width: 100%; margin: 5px 0; }
-            .filter-row select { width: 75px; font-size: 0.75rem; }
-            .clear-btn { padding: 8px 10px; font-size: 0.75rem; }
-        }
-    </style>
+  /* ===== Drop Zone ===== */
+  .drop-zone {
+    border: 3px dashed #bbb;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    background: #fff;
+    margin-bottom: 20px;
+    color: #555;
+    transition: 0.2s;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .drop-zone.dragover {
+    border-color: #2c3e50;
+    background: #ecf0f1;
+    color: #2c3e50;
+  }
+
+  /* ===== Messages ===== */
+  .stats {
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .info-row {
+    font-size: 16px;
+    color: #666;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  .error-box {
+    background: #fdecea;
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .success-box {
+    background: #eafaf1;
+    border: 2px solid #27ae60;
+    color: #1e8449;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* ===== Pagination ===== */
+  .pagination {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .pagination button {
+    padding: 10px 18px;
+    border: 2px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 16px;
+    min-width: 44px;
+    transition: 0.15s;
+    color: #333;
+    font-weight: 700;
+  }
+  .pagination button:hover:not(:disabled) {
+    background: #f0f0f0;
+    border-color: #999;
+  }
+  .pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .pagination button.active {
+    background: #2c3e50;
+    color: #fff;
+    border-color: #2c3e50;
+    font-weight: 800;
+  }
+  .pagination span {
+    padding: 0 6px;
+    color: #888;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .pagination .info {
+    margin-right: auto;
+    font-size: 16px;
+    color: #444;
+    font-weight: 700;
+  }
+
+  /* ===== Filters ===== */
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .filters-grid input {
+    padding: 12px 14px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 18px;
+    width: 100%;
+    background: #fff;
+    transition: 0.15s;
+    font-weight: 600;
+  }
+  .filters-grid input:focus {
+    outline: none;
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 3px rgba(44,62,80,0.12);
+  }
+
+  /* ===== Table ===== */
+  .table-wrap {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px;
+  }
+  th, td {
+    border-bottom: 2px solid #e0e0e0;
+    border-left: 2px solid #e0e0e0;
+    padding: 14px 16px;
+    text-align: right;
+    font-size: 17px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  th:first-child, td:first-child { border-left: none; }
+  th {
+    background: #2c3e50;
+    color: #fff;
+    font-weight: 800;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    user-select: none;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  th:hover {
+    background: #34495e;
+  }
+  th .sort-icon {
+    margin-right: 8px;
+    font-size: 14px;
+    opacity: 0.7;
+    display: inline-block;
+    width: 18px;
+    text-align: center;
+  }
+  th.sort-asc .sort-icon { opacity: 1; }
+  th.sort-desc .sort-icon { opacity: 1; }
+
+  tr:nth-child(even) { background: #fafbfc; }
+  tr:hover { background: #eef2f7; transition: 0.1s; }
+
+  td {
+    color: #222;
+    font-weight: 600;
+  }
+  td.num {
+    text-align: left;
+    direction: ltr;
+    font-family: 'Consolas', monospace;
+    font-weight: 700;
+  }
+
+  .empty-msg {
+    text-align: center;
+    padding: 50px;
+    color: #777;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  /* ===== Sort Controls Bar ===== */
+  .sort-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+  .sort-bar label {
+    color: #333;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .sort-bar select {
+    padding: 10px 14px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 18px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .sort-bar button {
+    padding: 10px 18px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    background: #f8f9fa;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    transition: 0.15s;
+    font-weight: 700;
+  }
+  .sort-bar button:hover {
+    background: #e9ecef;
+  }
+  .sort-bar button.active {
+    background: #2c3e50;
+    color: #fff;
+    border-color: #2c3e50;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    body { padding: 14px; font-size: 16px; }
+    h2 { font-size: 26px; }
+    .toolbar { padding: 12px; }
+    .toolbar input, .toolbar select, .toolbar button { font-size: 16px; padding: 10px 14px; }
+    .filters-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .filters-grid input { font-size: 16px; }
+    th, td { padding: 12px; font-size: 15px; }
+    .pagination button { font-size: 14px; padding: 8px 14px; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="upload-section" id="uploadSection">
-            <input type="file" id="fileInput" accept=".csv" multiple onchange="handleFiles(event)">
-            <label for="fileInput" class="upload-btn">📁 اختر ملفات CSV</label>
-            <button class="upload-btn" onclick="pickDirectory()" id="dirBtn" style="display:none;">📂 اختر مجلد</button>
-            <div class="drag-text" id="fileInfo">جاري محاولة فتح data.csv تلقائياً...</div>
-        </div>       
-
-        <div class="files-info" id="filesInfo">
-            <h3>📂 الملفات المحملة</h3>
-            <div class="file-list" id="fileList"></div>
-            <div class="total-badge" id="totalBadge"></div>
-        </div>
-
-        <div class="mapping-section" id="mappingSection">
-            <h3>⚙️ تعيين أعمدة البحث</h3>
-            <p>تم اكتشاف الأعمدة التالية من الملف. اختر العمود المناسب لكل حقل بحث:</p>
-            <div class="mapping-grid" id="mappingGrid"></div>
-            <button class="btn-confirm" onclick="confirmMapping()">✅ تأكيد التعيين وبدء البحث</button>
-        </div>
-
-        <div class="search-section" id="searchSection" style="display:none;">
-            <div class="search-grid" id="searchGrid"></div>
-            <div class="toggle-row" id="deathToggle" style="display:none;">
-                <label>
-                    <input type="checkbox" id="showDeathsOnly" onchange="triggerSearch()">
-                     إظهار  (الثقافي)
-                </label>
-            </div>
-            <div style="text-align:center; margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                <button class="clear-btn" style="padding:14px 32px; font-size:1.1rem;" onclick="clearAll()">🗑️ مسح كل الفلاتر</button>
-                <button class="clear-btn" style="padding:14px 32px; font-size:1.1rem;" onclick="showAllFilters()">👁️ إظهار كل حقول البحث</button>
-            </div>
-        </div>
-
-        <div class="results-section" id="resultsSection" style="display:none;">
-            <div class="stats" id="stats"></div>
-            <div class="pagination" id="pagination"></div>
-            <div class="scroll-proxy-wrapper">
-                <div class="scroll-proxy" id="scrollProxy">
-                    <div class="scroll-proxy-content" id="scrollProxyContent"></div>
-                </div>
-            </div>
-            <div class="table-wrapper" id="tableWrapper">
-                <table id="resultsTable">
-                    <thead id="tableHead"></thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let allData = [];
-        let filteredData = [];
-        let currentPage = 1;
-        const rowsPerPage = 100;
-        let headers = [];
-        let searchTimeout = null;
-        let loadedFiles = [];
-        let columnMap = {};
-        let sortColumn = '';
-        let sortDirection = 'asc';
-
-        const DB_NAME = 'CSVQueryApp';
-        const STORE_NAME = 'handles';
-
-        const searchFields = [
-            { key: 'name', label: '🔤 الاسم', placeholder: 'اكتب الاسم...', arabic: true },
-            { key: 'police', label: '🎖️ رقم الشرطة', placeholder: 'رقم الشرطة...', arabic: false },
-            { key: 'id', label: '🆔 الرقم القومي', placeholder: 'الرقم القومي...', arabic: false },
-            { key: 'gov', label: '🏛️ المحافظة', placeholder: 'المحافظة...', arabic: true },
-            { key: 'salary', label: '💰 الموصى (المرتب)', placeholder: 'الموصى...', arabic: false },
-            { key: 'year', label: '📅 السنة', placeholder: 'السنة...', arabic: false },
-            { key: 'entity', label: '🏢 الجهة المطلوبة', placeholder: 'الجهة...', arabic: true },
-            { key: 'status', label: '📋 موقف المجند', placeholder: 'الموقف...', arabic: true },
-            { key: 'triple', label: '🔢 الرقم الثلاثي', placeholder: 'الرقم الثلاثي...', arabic: false },
-            { key: 'qualification', label: '🎓 المؤهل', placeholder: 'المؤهل...', arabic: true },
-            { key: 'deaths', label: '  (الثقافي)', placeholder: 'الثقافي...', arabic: true }
-        ];
-
-        function normalizeArabic(text) {
-            if (!text) return '';
-            text = text.toString();
-            text = text.replace(/[\u064B-\u065F\u0670\u0640]/g, '');
-            text = text.replace(/[\u0623\u0625\u0622\u0671]/g, '\u0627');
-            text = text.replace(/\u0629/g, '\u0647');
-            text = text.replace(/\u0649/g, '\u064A');
-            text = text.replace(/\s+/g, ' ').trim();
-            return text.toLowerCase();
-        }
-
-        function openDB() {
-            return new Promise(function(resolve, reject) {
-                const req = indexedDB.open(DB_NAME, 1);
-                req.onupgradeneeded = function() { req.result.createObjectStore(STORE_NAME); };
-                req.onsuccess = function() { resolve(req.result); };
-                req.onerror = function() { reject(req.error); };
-            });
-        }
-
-        async function saveHandle(handle) {
-            try {
-                const db = await openDB();
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).put(handle, 'lastDir');
-                await new Promise(function(resolve, reject) {
-                    tx.oncomplete = resolve;
-                    tx.onerror = reject;
-                });
-            } catch (e) { console.error('Save handle error:', e); }
-        }
-
-        async function getHandle() {
-            try {
-                const db = await openDB();
-                return new Promise(function(resolve, reject) {
-                    const tx = db.transaction(STORE_NAME, 'readonly');
-                    const req = tx.objectStore(STORE_NAME).get('lastDir');
-                    req.onsuccess = function() { resolve(req.result); };
-                    req.onerror = reject;
-                });
-            } catch (e) { return null; }
-        }
-
-        const uploadSection = document.getElementById('uploadSection');
-        uploadSection.addEventListener('dragover', function(e) { e.preventDefault(); uploadSection.classList.add('dragover'); });
-        uploadSection.addEventListener('dragleave', function() { uploadSection.classList.remove('dragover'); });
-        uploadSection.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadSection.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files).filter(function(f) { return f.name.endsWith('.csv'); });
-            if (files.length > 0) processFiles(files);
-        });
-
-        async function initApp() {
-            if ('showDirectoryPicker' in window) {
-                document.getElementById('dirBtn').style.display = 'inline-block';
-            }
-
-            try {
-                const res = await fetch('data.csv', { cache: 'no-store' });
-                if (res.ok) {
-                    const text = await res.text();
-                    if (text.trim().length > 0) {
-                        mergeAndDisplay([{ name: 'data.csv', text: text }]);
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.log('Fetch failed:', e);
-            }
-
-            if ('showDirectoryPicker' in window) {
-                try {
-                    const savedHandle = await getHandle();
-                    if (savedHandle) {
-                        const perm = await savedHandle.queryPermission({ mode: 'read' });
-                        if (perm === 'granted') {
-                            const found = await scanDirectory(savedHandle);
-                            if (found) return;
-                        } else if (perm === 'prompt') {
-                            const newPerm = await savedHandle.requestPermission({ mode: 'read' });
-                            if (newPerm === 'granted') {
-                                const found = await scanDirectory(savedHandle);
-                                if (found) return;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.log('Saved handle invalid:', e);
-                }
-            }
-
-            document.getElementById('fileInfo').innerHTML = 
-                '⚠️ لم يتم العثور على data.csv تلقائياً.<br>اضغط "اختر ملفات CSV" أو "اختر مجلد" أو اسحب الملفات هنا';
-        }
-
-        async function pickDirectory() {
-            if (!('showDirectoryPicker' in window)) {
-                alert('متصفحك لا يدعم اختيار المجلدات. استخدم زر "اختر ملفات CSV"');
-                return;
-            }
-            try {
-                const dirHandle = await window.showDirectoryPicker({
-                    id: 'csv-query-app',
-                    mode: 'read'
-                });
-                await saveHandle(dirHandle);
-                const found = await scanDirectory(dirHandle);
-                if (!found) {
-                    alert('data.csv غير موجود في المجلد المختار');
-                }
-            } catch (e) {
-                console.error('Directory picker cancelled', e);
-            }
-        }
-
-        async function scanDirectory(dirHandle) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file' && entry.name.toLowerCase() === 'data.csv') {
-                    const file = await entry.getFile();
-                    const text = await file.text();
-                    mergeAndDisplay([{ name: file.name, text: text }]);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function handleFiles(event) {
-            const files = Array.from(event.target.files);
-            if (files.length > 0) processFiles(files);
-        }
-
-        function processFiles(files) {
-            const readers = files.map(function(file) {
-                return new Promise(function(resolve, reject) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) { resolve({ name: file.name, text: e.target.result }); };
-                    reader.onerror = function(e) { reject({ name: file.name, error: e }); };
-                    reader.readAsText(file);
-                });
-            });
-
-            Promise.all(readers)
-                .then(function(results) { mergeAndDisplay(results); })
-                .catch(function(err) {
-                    console.error('Error reading file:', err);
-                    document.getElementById('fileInfo').innerHTML = '⚠️ حدث خطأ أثناء قراءة الملف';
-                });
-        }
-
-        function mergeAndDisplay(fileResults) {
-            allData = [];
-            loadedFiles = [];
-            headers = [];
-
-            fileResults.forEach(function(item) {
-                const name = item.name;
-                const text = item.text;
-                const lines = text.split(/\r?\n/).filter(function(line) { return line.trim() !== ''; });
-                if (lines.length === 0) return;
-
-                const fileHeaders = parseLine(lines[0]);
-                if (headers.length === 0) headers = fileHeaders;
-
-                let count = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const values = parseLine(lines[i]);
-                    if (values.length > 0 && values.some(function(v) { return v.trim() !== ''; })) {
-                        const row = {};
-                        fileHeaders.forEach(function(h, idx) {
-                            row[h] = values[idx] !== undefined ? values[idx].trim() : '';
-                        });
-                        allData.push(row);
-                        count++;
-                    }
-                }
-                loadedFiles.push({ name: name, count: count });
-            });
-
-            filteredData = allData.slice();
-            currentPage = 1;
-
-            document.getElementById('filesInfo').style.display = 'block';
-            const listHTML = loadedFiles.map(function(f) {
-                return '<div class="file-item">' +
-                    '<span class="name">📄 ' + escapeHtml(f.name) + '</span>' +
-                    '<span class="count">' + f.count.toLocaleString() + ' سجل</span>' +
-                '</div>';
-            }).join('');
-            document.getElementById('fileList').innerHTML = listHTML;
-            document.getElementById('totalBadge').innerHTML = 
-                '📊 إجمالي السجلات المدمجة: ' + allData.length.toLocaleString();
-
-            document.getElementById('fileInfo').innerHTML = 
-                '✅ تم تحميل ' + loadedFiles.length + ' ملف | إجمالي السجلات: ' + allData.length.toLocaleString();
-
-            showMapping();
-        }
-
-        function parseLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                const nextChar = line[i + 1];
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current);
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            result.push(current);
-            return result;
-        }
-
-        function showMapping() {
-            const mappingSection = document.getElementById('mappingSection');
-            const mappingGrid = document.getElementById('mappingGrid');
-            const autoMap = autoDetectColumns(headers);
-
-            let html = '';
-            searchFields.forEach(function(field) {
-                const detected = autoMap[field.key] || '';
-                html += '<div class="map-item">' +
-                    '<label>' + field.label + '</label>' +
-                    '<select id="map_' + field.key + '">' +
-                        '<option value="">-- اختر العمود --</option>' +
-                        headers.map(function(h) {
-                            return '<option value="' + escapeHtml(h) + '"' + (h === detected ? ' selected' : '') + '>' + 
-                                escapeHtml(h) + 
-                            '</option>';
-                        }).join('') +
-                    '</select>' +
-                '</div>';
-            });
-
-            mappingGrid.innerHTML = html;
-            mappingSection.style.display = 'block';
-            mappingSection.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function autoDetectColumns(headers) {
-            const map = {};
-            const normalizedHeaders = headers.map(function(h) { return normalizeArabic(h); });
-
-            const patterns = {
-                name: ['اسم', 'name', 'الموظف', 'العميل', 'الشخص', 'المجند'],
-                police: ['شرط', 'police', 'رقم_الشرطة', 'رقم الشرطة', 'police_id', 'كود', 'رقم البطاقة'],
-                id: ['قوم', 'id', 'الرقم القومي', 'الرقم_القومي', 'national', 'رقم_قومي', 'رقم قومي', 'ssn', 'الرقم القومى'],
-                gov: ['محافظ', 'gov', 'محافظة', 'المحافظة', 'الاقامة', 'الإقامة', 'state', 'city', 'محافظة الاقامة'],
-                salary: ['موص', 'salary', 'مرتب', 'المرتب', 'الراتب', 'راتب', 'pay', 'مبلغ', 'مخصصات'],
-                year: ['سنه', 'سنة', 'year', 'السنة', 'السنه', 'تاريخ', 'date', 'العام', 'عام'],
-                entity: ['جه', 'entity', 'الجهة', 'جهة', 'department', 'قسم', 'وحدة', 'الادارة'],
-                status: ['موقف', 'status', 'حالة', 'state', 'الحالة', 'الموقف', 'وضع', 'condition'],
-                triple: ['ثلاث', 'triple', 'رقم ثلاثي', 'الرقم الثلاثي', '3digits', 'code3', 'رقم 3'],
-                qualification: ['مؤهل', 'qualification', 'الشهادة', 'degree', 'تعليم', 'دراسة', 'الدرجة'],
-                deaths: ['وفا', 'death', 'ثقافي', 'الثقافي', 'حالة الوفاة', 'متوفى', 'deceased']
-            };
-
-            for (const key in patterns) {
-                map[key] = findBestMatch(headers, normalizedHeaders, patterns[key]);
-            }
-            return map;
-        }
-
-        function findBestMatch(headers, normalizedHeaders, patterns) {
-            for (let i = 0; i < normalizedHeaders.length; i++) {
-                const h = normalizedHeaders[i];
-                for (let j = 0; j < patterns.length; j++) {
-                    if (h.indexOf(normalizeArabic(patterns[j])) !== -1) {
-                        return headers[i];
-                    }
-                }
-            }
-            return '';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function confirmMapping() {
-            columnMap = {};
-            let hasMapping = false;
-
-            searchFields.forEach(function(field) {
-                const select = document.getElementById('map_' + field.key);
-                const value = select ? select.value : '';
-                columnMap[field.key] = value;
-                if (value) hasMapping = true;
-            });
-
-            if (!hasMapping) {
-                alert('⚠️ يرجى تعيين عمود واحد على الأقل');
-                return;
-            }
-
-            buildSearchUI();
-
-            if (columnMap.deaths) {
-                document.getElementById('deathToggle').style.display = 'flex';
-            }
-
-            document.getElementById('mappingSection').style.display = 'none';
-            document.getElementById('searchSection').style.display = 'block';
-
-            triggerSearch();
-        }
-
-        function sortResults(column) {
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
-            applySort();
-            currentPage = 1;
-            showResults(getActiveFilters());
-        }
-
-        function applySort() {
-            if (!sortColumn) return;
-            const isNumeric = filteredData.every(function(row) {
-                const val = row[sortColumn];
-                return val === '' || val === undefined || val === null || !isNaN(parseFloat(val));
-            });
-
-            filteredData.sort(function(a, b) {
-                let valA = a[sortColumn] || '';
-                let valB = b[sortColumn] || '';
-
-                if (isNumeric) {
-                    const numA = parseFloat(valA) || 0;
-                    const numB = parseFloat(valB) || 0;
-                    return sortDirection === 'asc' ? numA - numB : numB - numA;
-                } else {
-                    const strA = valA.toString();
-                    const strB = valB.toString();
-                    const cmp = strA.localeCompare(strB, 'ar', { sensitivity: 'base', numeric: true });
-                    return sortDirection === 'asc' ? cmp : -cmp;
-                }
-            });
-        }
-
-        function getActiveFilters() {
-            const filters = {};
-            searchFields.forEach(function(field) {
-                const colName = columnMap[field.key];
-                if (!colName) return;
-                let val = document.getElementById('search_' + field.key);
-                val = val ? val.value.trim() : '';
-                if (field.arabic) val = normalizeArabic(val);
-                filters[field.key] = {
-                    value: val,
-                    mode: document.getElementById('mode_' + field.key).value,
-                    column: colName,
-                    arabic: field.arabic
-                };
-            });
-            return filters;
-        }
-
-        function buildSearchUI() {
-            const grid = document.getElementById('searchGrid');
-            let html = '';
-
-            searchFields.forEach(function(field) {
-                if (!columnMap[field.key]) return;
-
-                html += '<div class="filter-box" id="filter_box_' + field.key + '">' +
-                    '<div class="filter-header">' +
-                        '<label>' + field.label + '</label>' +
-                        '<button class="close-filter-btn" onclick="closeFilterBox(\'' + field.key + '\')" title="إغلاق الحقل">✕</button>' +
-                    '</div>' +
-                    '<div class="filter-row">' +
-                        '<select id="mode_' + field.key + '" onchange="triggerSearch()">' +
-                            '<option value="contains">يحتوي</option>' +
-                            '<option value="starts">يبدأ</option>' +
-                            '<option value="ends">ينتهي</option>' +
-                            '<option value="equals">يساوي</option>' +
-                        '</select>' +
-                        '<input type="text" id="search_' + field.key + '" placeholder="' + field.placeholder + '" oninput="debouncedSearch()">' +
-                        '<button class="clear-btn" onclick="clearField(\'' + field.key + '\')">🗑️</button>' +
-                    '</div>' +
-                '</div>';
-            });
-
-            grid.innerHTML = html;
-        }
-
-        function closeFilterBox(key) {
-            const box = document.getElementById('filter_box_' + key);
-            if (box) {
-                box.style.display = 'none';
-                // Also clear its value so it doesn't affect search
-                const input = document.getElementById('search_' + key);
-                if (input) input.value = '';
-                triggerSearch();
-            }
-        }
-
-        function showAllFilters() {
-            searchFields.forEach(function(field) {
-                if (!columnMap[field.key]) return;
-                const box = document.getElementById('filter_box_' + field.key);
-                if (box) box.style.display = '';
-            });
-        }
-
-        function debouncedSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(triggerSearch, 300);
-        }
-
-        function triggerSearch() {
-            const filters = {};
-            searchFields.forEach(function(field) {
-                const colName = columnMap[field.key];
-                if (!colName) return;
-
-                let val = document.getElementById('search_' + field.key);
-                val = val ? val.value.trim() : '';
-
-                if (field.arabic) {
-                    val = normalizeArabic(val);
-                }
-
-                filters[field.key] = {
-                    value: val,
-                    mode: document.getElementById('mode_' + field.key).value,
-                    column: colName,
-                    arabic: field.arabic
-                };
-            });
-
-            const showDeathsOnly = document.getElementById('showDeathsOnly');
-            const deathsCol = columnMap.deaths;
-
-            const hasFilter = Object.values(filters).some(function(f) { return f.value; }) || (showDeathsOnly && showDeathsOnly.checked && deathsCol);
-
-            if (!hasFilter) {
-                filteredData = allData.slice();
-            } else {
-                filteredData = allData.filter(function(row) {
-                    for (const key in filters) {
-                        const f = filters[key];
-                        if (!f.value) continue;
-
-                        let cellValue = row[f.column] || '';
-                        if (f.arabic) {
-                            cellValue = normalizeArabic(cellValue);
-                        }
-
-                        if (!matchField(cellValue, f.value, f.mode)) {
-                            return false;
-                        }
-                    }
-
-                    if (showDeathsOnly && showDeathsOnly.checked && deathsCol) {
-                        const deathVal = normalizeArabic(row[deathsCol] || '');
-                        if (deathVal.indexOf('ثقافي') === -1 && deathVal.indexOf('وفا') === -1 && deathVal.indexOf('death') === -1 && deathVal.indexOf('deceased') === -1) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                });
-            }
-
-            currentPage = 1;
-            applySort();
-            showResults(filters);
-        }
-
-        function matchField(value, search, mode) {
-            if (!search) return true;
-            if (!value) return false;
-            const val = value.toString().toLowerCase();
-            const srch = search.toLowerCase();
-
-            switch(mode) {
-                case 'equals': return val === srch;
-                case 'starts': return val.indexOf(srch) === 0;
-                case 'ends': return val.indexOf(srch) === val.length - srch.length;
-                case 'contains': default: return val.indexOf(srch) !== -1;
-            }
-        }
-
-        function clearField(key) {
-            const el = document.getElementById('search_' + key);
-            if (el) el.value = '';
-            triggerSearch();
-        }
-
-        function clearAll() {
-            searchFields.forEach(function(field) {
-                const el = document.getElementById('search_' + field.key);
-                if (el) el.value = '';
-            });
-            const deathToggle = document.getElementById('showDeathsOnly');
-            if (deathToggle) deathToggle.checked = false;
-            triggerSearch();
-        }
-
-        function setupScrollProxy() {
-            const proxy = document.getElementById('scrollProxy');
-            const wrapper = document.getElementById('tableWrapper');
-            const proxyContent = document.getElementById('scrollProxyContent');
-
-            if (!proxy || !wrapper || !proxyContent) return;
-
-            proxy.addEventListener('scroll', function() {
-                wrapper.scrollLeft = proxy.scrollLeft;
-            });
-            wrapper.addEventListener('scroll', function() {
-                proxy.scrollLeft = wrapper.scrollLeft;
-            });
-
-            const table = document.getElementById('resultsTable');
-            if (table) {
-                proxyContent.style.width = table.scrollWidth + 'px';
-            }
-        }
-
-        function showResults(activeFilters) {
-            const resultsSection = document.getElementById('resultsSection');
-            const stats = document.getElementById('stats');
-            const tableHead = document.getElementById('tableHead');
-            const tableBody = document.getElementById('tableBody');
-            const pagination = document.getElementById('pagination');
-
-            if (filteredData.length === 0) {
-                resultsSection.style.display = 'block';
-                tableHead.innerHTML = '<tr>' + headers.map(function(h) { return '<th>' + escapeHtml(h) + '</th>'; }).join('') + '</tr>';
-                tableBody.innerHTML = '<tr><td colspan="' + headers.length + '" class="no-results">❌ لا توجد نتائج مطابقة</td></tr>';
-                stats.innerHTML = '<span>📊 إجمالي السجلات: <strong>' + allData.length.toLocaleString() + '</strong></span>' +
-                    '<span>🔍 نتائج البحث: <strong>0</strong></span>';
-                pagination.innerHTML = '';
-                document.getElementById('scrollProxyContent').style.width = '1px';
-                return;
-            }
-
-            resultsSection.style.display = 'block';
-            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-            const start = (currentPage - 1) * rowsPerPage + 1;
-            const end = Math.min(currentPage * rowsPerPage, filteredData.length);
-
-            stats.innerHTML = 
-                '<span>📊 إجمالي السجلات: <strong>' + allData.length.toLocaleString() + '</strong></span>' +
-                '<span class="live-indicator"><span class="pulse"></span> نتائج البحث: <strong>' + filteredData.length.toLocaleString() + '</strong></span>' +
-                '<span>📄 الصفحة ' + currentPage + ' من ' + totalPages + ' (عرض ' + start.toLocaleString() + '-' + end.toLocaleString() + ')</span>';
-
-            let pagHTML = '';
-            pagHTML += '<button onclick="goToPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>⏮️ الأولى</button>';
-            pagHTML += '<button onclick="goToPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>◀ السابق</button>';
-
-            const maxButtons = 7;
-            let startPage = Math.max(1, currentPage - Math.floor(maxButtons/2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            if (endPage - startPage < maxButtons - 1) {
-                startPage = Math.max(1, endPage - maxButtons + 1);
-            }
-
-            for (let p = startPage; p <= endPage; p++) {
-                pagHTML += '<button onclick="goToPage(' + p + ')" class="' + (p === currentPage ? 'page-active' : '') + '">' + p + '</button>';
-            }
-
-            pagHTML += '<button onclick="goToPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>التالي ▶</button>';
-            pagHTML += '<button onclick="goToPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>الأخيرة ⏭️</button>';
-            pagination.innerHTML = pagHTML;
-
-            let headHTML = '<tr>';
-            headers.forEach(function(h) {
-                const isSorted = sortColumn === h;
-                const arrow = isSorted ? (sortDirection === 'asc' ? ' ▲' : ' ▼') : ' ⇅';
-                const activeClass = isSorted ? ' style="background:#d0d0d0;"' : '';
-                headHTML += '<th' + activeClass + ' onclick="sortResults(\'' + escapeHtml(h).replace(/'/g, "\\'") + '\')" style="cursor:pointer;user-select:none;" title="اضغط للفرز">' + escapeHtml(h) + '<span style="margin-right:6px;font-size:0.85em;color:#555;">' + arrow + '</span></th>';
-            });
-            headHTML += '</tr>';
-            tableHead.innerHTML = headHTML;
-
-            const pageData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-
-            const highlightTerms = {};
-            searchFields.forEach(function(field) {
-                const el = document.getElementById('search_' + field.key);
-                if (el && el.value.trim()) {
-                    highlightTerms[columnMap[field.key]] = el.value.trim();
-                }
-            });
-
-            let bodyHTML = '';
-            pageData.forEach(function(row) {
-                bodyHTML += '<tr>';
-                headers.forEach(function(h) {
-                    let cell = row[h] || '';
-                    if (highlightTerms[h]) {
-                        cell = highlightText(cell, highlightTerms[h]);
-                    }
-                    bodyHTML += '<td>' + cell + '</td>';
-                });
-                bodyHTML += '</tr>';
-            });
-            tableBody.innerHTML = bodyHTML;
-
-            requestAnimationFrame(function() {
-                setupScrollProxy();
-            });
-        }
-
-        function highlightText(text, search) {
-            if (!search || !text) return text;
-            const regex = new RegExp('(' + escapeRegex(search) + ')', 'gi');
-            return text.toString().replace(regex, '<span class="highlight">$1</span>');
-        }
-
-        function escapeRegex(string) {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
-
-        function goToPage(page) {
-            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-            if (page < 1 || page > totalPages) return;
-            currentPage = page;
-            showResults(getActiveFilters());
-        }
-
-        window.addEventListener('DOMContentLoaded', initApp);
-    </script>
+
+<h2>📊 عرض وبحث ملفات CSV</h2>
+
+<div class="profile-row">
+  <span class="profile-badge" id="profileBadge">الملف: —</span>
+</div>
+
+<div class="toolbar">
+  <input type="file" id="csvFile" accept=".csv">
+  <select id="encoding">
+    <option value="utf-8">UTF-8</option>
+    <option value="windows-1256">Windows-1256 (Excel)</option>
+  </select>
+  <button onclick="linkFile()" id="btnLink" class="primary">🔗 ربط ملف</button>
+  <button onclick="refreshLinked()" id="btnRefresh" disabled>🔄 تحديث</button>
+  <button onclick="linkDirectory()" id="btnDir" class="primary">📂 اختر مجلد</button>
+  <button onclick="clearAll()" class="danger">🗑️ مسح الكل</button>
+</div>
+
+<div class="drop-zone" id="dropZone">
+  📁 اسحب ملف CSV هنا للرفع السريع
+</div>
+
+<div class="error-box" id="errorBox"></div>
+<div class="success-box" id="successBox"></div>
+
+<div class="stats" id="stats"></div>
+
+<!-- Pagination TOP -->
+<div class="pagination" id="paginationTop"></div>
+
+<!-- Sort Controls -->
+<div class="sort-bar" id="sortBar" style="display:none;">
+  <label>🔄 الفرز:</label>
+  <select id="sortCol"></select>
+  <button id="btnAsc" onclick="setSortDir('asc')">أ ➜ ي (تصاعدي)</button>
+  <button id="btnDesc" onclick="setSortDir('desc')">ي ➜ أ (تنازلي)</button>
+  <button onclick="clearSort()" style="margin-right:auto;">❌ إلغاء الفرز</button>
+</div>
+
+<!-- Dynamic Filters -->
+<div class="filters-grid" id="filtersBox"></div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table id="dataTable">
+    <thead><tr><th class="empty-msg">لا توجد بيانات</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+/* =========================
+   Profile ID (Per-Tab)
+========================= */
+let PROFILE = '';
+
+function initProfile() {
+  let hash = location.hash.replace(/^#/, '').trim();
+  if (!hash) {
+    hash = 'default';
+    location.hash = hash;
+  }
+  PROFILE = hash;
+  document.getElementById('profileBadge').textContent = 'الملف: ' + PROFILE;
+  document.title = 'CSV — ' + PROFILE;
+}
+
+/* =========================
+   IndexedDB Setup
+========================= */
+const DB_NAME = 'CSVViewerDB_v3';
+const DB_VERSION = 1;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('cache')) d.createObjectStore('cache', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('handles')) d.createObjectStore('handles', { keyPath: 'id' });
+    };
+  });
+}
+
+async function dbPut(store, id, data) {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    const req = s.put({ id, ...data });
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbGet(store, id) {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const s = tx.objectStore(store);
+    const req = s.get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbDelete(store, id) {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const s = tx.objectStore(store);
+    const req = s.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/* =========================
+   State
+========================= */
+let rawData = [];
+let filteredData = [];
+let headers = [];
+let currentPage = 1;
+const pageSize = 100;
+let linkedFileHandle = null;
+let linkedDirHandle = null;
+let sortCol = null;
+let sortDir = 'asc';
+
+/* =========================
+   CSV Parser
+========================= */
+function parseCSVLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inside = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inside = !inside; }
+    else if (c === delimiter && !inside) { result.push(current.trim()); current = ''; }
+    else { current += c; }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function detectDelimiter(firstLine) {
+  const comma = (firstLine.match(/,/g) || []).length;
+  const semi  = (firstLine.match(/;/g) || []).length;
+  const tab   = (firstLine.match(/\t/g) || []).length;
+  if (semi > comma && semi > tab) return ';';
+  if (tab > comma && tab > semi) return '\t';
+  return ',';
+}
+
+function decodeBuffer(buffer, encoding) {
+  if (encoding === 'windows-1256') {
+    try { return new TextDecoder('windows-1256').decode(buffer); }
+    catch (e) { return new TextDecoder('utf-8').decode(buffer); }
+  }
+  return new TextDecoder('utf-8').decode(buffer);
+}
+
+/* =========================
+   Process CSV
+========================= */
+function processCSV(text, sourceName, saveToCache = true) {
+  hideError(); hideSuccess();
+  if (!text || !text.trim()) { showError('الملف فارغ.'); return; }
+
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) { showError('الملف يحتوي على صف واحد فقط (أو فارغ).'); return; }
+
+  const delimiter = detectDelimiter(lines[0]);
+  headers = parseCSVLine(lines[0], delimiter);
+
+  rawData = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i], delimiter);
+    if (values.length === 1 && values[0] === '') continue;
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = values[idx] !== undefined ? values[idx] : ''; });
+    rawData.push(obj);
+  }
+
+  filteredData = [...rawData];
+  currentPage = 1;
+  sortCol = null; sortDir = 'asc';
+
+  createFilters();
+  updateSortBar();
+  renderAll();
+
+  const msg = `المصدر: ${sourceName || 'غير معروف'} | الأعمدة: ${headers.length} | الصفوف: ${rawData.length}`;
+  document.getElementById('stats').innerHTML = msg + `<div class="info-row">آخر تحديث: ${new Date().toLocaleString('ar-EG')}</div>`;
+
+  if (saveToCache) {
+    dbPut('cache', 'last_' + PROFILE, { text: text, sourceName: sourceName || '', date: Date.now() }).catch(() => {});
+  }
+  showSuccess(`✅ تم تحميل ${rawData.length} صف بنجاح.`);
+}
+
+/* =========================
+   Sorting
+========================= */
+function updateSortBar() {
+  const bar = document.getElementById('sortBar');
+  const sel = document.getElementById('sortCol');
+
+  if (headers.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+
+  sel.innerHTML = '<option value="">-- اختر عمود --</option>';
+  headers.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = h;
+    if (h === sortCol) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  sel.onchange = () => {
+    if (sel.value) { sortCol = sel.value; applySort(); }
+  };
+
+  document.getElementById('btnAsc').classList.toggle('active', sortDir === 'asc');
+  document.getElementById('btnDesc').classList.toggle('active', sortDir === 'desc');
+}
+
+function setSortDir(dir) {
+  if (!sortCol) {
+    if (headers.length > 0) {
+      sortCol = headers[0];
+      document.getElementById('sortCol').value = sortCol;
+    } else return;
+  }
+  sortDir = dir;
+  updateSortBar();
+  applySort();
+}
+
+function clearSort() {
+  sortCol = null;
+  sortDir = 'asc';
+  updateSortBar();
+  applyFilters();
+}
+
+function applySort() {
+  if (!sortCol) { applyFilters(); return; }
+
+  const inputs = document.querySelectorAll('#filtersBox input');
+  const terms = [];
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if (v) terms.push({ col: inp.dataset.col, val: v.toLowerCase() });
+  });
+
+  let data = [...rawData];
+  if (terms.length > 0) {
+    data = data.filter(row => terms.every(t => (row[t.col] || '').toLowerCase().includes(t.val)));
+  }
+
+  data.sort((a, b) => {
+    let av = (a[sortCol] || '').toString().trim();
+    let bv = (b[sortCol] || '').toString().trim();
+
+    const an = parseFloat(av.replace(/,/g, ''));
+    const bn = parseFloat(bv.replace(/,/g, ''));
+
+    let result;
+    if (!isNaN(an) && !isNaN(bn) && av !== '' && bv !== '') {
+      result = an - bn;
+    } else {
+      result = av.localeCompare(bv, 'ar');
+    }
+
+    return sortDir === 'asc' ? result : -result;
+  });
+
+  filteredData = data;
+  currentPage = 1;
+  renderAll();
+}
+
+/* =========================
+   Filters
+========================= */
+function createFilters() {
+  const box = document.getElementById('filtersBox');
+  box.innerHTML = '';
+  headers.forEach(h => {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = '🔍 ' + h;
+    inp.dataset.col = h;
+    inp.addEventListener('input', () => { currentPage = 1; applyFilters(); });
+    box.appendChild(inp);
+  });
+}
+
+function applyFilters() {
+  const inputs = document.querySelectorAll('#filtersBox input');
+  const terms = [];
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if (v) terms.push({ col: inp.dataset.col, val: v.toLowerCase() });
+  });
+
+  let data = [...rawData];
+  if (terms.length > 0) {
+    data = data.filter(row => terms.every(t => (row[t.col] || '').toLowerCase().includes(t.val)));
+  }
+
+  if (sortCol) {
+    data.sort((a, b) => {
+      let av = (a[sortCol] || '').toString().trim();
+      let bv = (b[sortCol] || '').toString().trim();
+      const an = parseFloat(av.replace(/,/g, ''));
+      const bn = parseFloat(bv.replace(/,/g, ''));
+      let result;
+      if (!isNaN(an) && !isNaN(bn) && av !== '' && bv !== '') {
+        result = an - bn;
+      } else {
+        result = av.localeCompare(bv, 'ar');
+      }
+      return sortDir === 'asc' ? result : -result;
+    });
+  }
+
+  filteredData = data;
+  currentPage = 1;
+  renderAll();
+}
+
+/* =========================
+   Pagination & Table
+========================= */
+function renderAll() {
+  renderPagination();
+  renderTable();
+}
+
+function renderPagination() {
+  const box = document.getElementById('paginationTop');
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  if (totalPages <= 1) {
+    box.innerHTML = `<span class="info">عرض ${filteredData.length} من ${rawData.length} صف</span>`;
+    return;
+  }
+
+  let html = '';
+  html += `<button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>« السابق</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+      html += `<button onclick="goPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+    } else if (i === currentPage - 3 || i === currentPage + 3) {
+      html += `<span>...</span>`;
+    }
+  }
+
+  html += `<button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>التالي »</button>`;
+  html += `<span class="info">صفحة ${currentPage} من ${totalPages} | عرض ${filteredData.length} من ${rawData.length}</span>`;
+
+  box.innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredData.length / pageSize);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderAll();
+}
+
+function renderTable() {
+  const table = document.getElementById('dataTable');
+
+  if (headers.length === 0) {
+    table.innerHTML = '<thead><tr><th class="empty-msg">لا توجد بيانات</th></tr></thead><tbody></tbody>';
+    return;
+  }
+
+  let thead = '<thead><tr>';
+  headers.forEach(h => {
+    let icon = '⇅';
+    let cls = '';
+    if (h === sortCol) {
+      icon = sortDir === 'asc' ? '▲' : '▼';
+      cls = sortDir === 'asc' ? 'sort-asc' : 'sort-desc';
+    }
+    thead += `<th class="${cls}" onclick="toggleSort('${escapeJs(h)}')">${escapeHtml(h)} <span class="sort-icon">${icon}</span></th>`;
+  });
+  thead += '</tr></thead>';
+
+  const start = (currentPage - 1) * pageSize;
+  const pageRows = filteredData.slice(start, start + pageSize);
+
+  let tbody;
+  if (pageRows.length === 0) {
+    tbody = `<tbody><tr><td colspan="${headers.length}" class="empty-msg">لا توجد نتائج</td></tr></tbody>`;
+  } else {
+    tbody = '<tbody>' + pageRows.map(row => {
+      let tr = '<tr>';
+      headers.forEach(h => {
+        const val = row[h] || '';
+        const isNum = /^[\d\s,.+-]+$/.test(val.trim()) && val.trim() !== '';
+        tr += `<td ${isNum ? 'class="num"' : ''}>${escapeHtml(val)}</td>`;
+      });
+      tr += '</tr>';
+      return tr;
+    }).join('') + '</tbody>';
+  }
+
+  table.innerHTML = thead + tbody;
+}
+
+function toggleSort(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = 'asc';
+  }
+  updateSortBar();
+  applySort();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function escapeJs(str) {
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+/* =========================
+   File System Access API (Per-Profile)
+========================= */
+async function linkFile() {
+  if (!window.showOpenFilePicker) {
+    showError('متصفحك لا يدعم ميزة "ربط الملف". استخدم زر رفع الملف العادي.');
+    return;
+  }
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'CSV Files', accept: { 'text/csv': ['.csv'] } }],
+      startIn: 'documents'
+    });
+    linkedFileHandle = handle;
+    await dbPut('handles', 'file_' + PROFILE, { handle: handle });
+
+    await readLinkedFile();
+    document.getElementById('btnRefresh').disabled = false;
+    showSuccess('🔗 تم ربط الملف لهذه النافذة (' + PROFILE + ').');
+  } catch (e) {
+    if (e.name !== 'AbortError') showError('خطأ في ربط الملف: ' + e.message);
+  }
+}
+
+async function linkDirectory() {
+  if (!window.showDirectoryPicker) {
+    showError('متصفحك لا يدعم اختيار المجلدات. استخدم زر رفع الملف.');
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({ startIn: 'documents' });
+    linkedDirHandle = handle;
+    await dbPut('handles', 'dir_' + PROFILE, { handle: handle });
+
+    await readLinkedDirectory();
+    document.getElementById('btnRefresh').disabled = false;
+    showSuccess('📂 تم ربط المجلد لهذه النافذة (' + PROFILE + ').');
+  } catch (e) {
+    if (e.name !== 'AbortError') showError('خطأ: ' + e.message);
+  }
+}
+
+async function readLinkedFile() {
+  if (!linkedFileHandle) return false;
+  try {
+    const file = await linkedFileHandle.getFile();
+    const text = await file.text();
+    processCSV(text, file.name, true);
+    return true;
+  } catch (e) {
+    console.warn('Cannot read linked file:', e);
+    return false;
+  }
+}
+
+async function readLinkedDirectory() {
+  if (!linkedDirHandle) return false;
+  try {
+    for await (const entry of linkedDirHandle.values()) {
+      if (entry.kind === 'file' && entry.name.toLowerCase() === 'data.csv') {
+        const file = await entry.getFile();
+        const text = await file.text();
+        processCSV(text, 'data.csv (من المجلد المرتبط)', true);
+        return true;
+      }
+    }
+    showError('لم يتم العثور على data.csv في المجلد المرتبط.');
+    return false;
+  } catch (e) {
+    console.warn('Cannot read directory:', e);
+    return false;
+  }
+}
+
+async function refreshLinked() {
+  hideSuccess(); hideError();
+  if (linkedFileHandle) {
+    const ok = await readLinkedFile();
+    if (ok) { showSuccess('🔄 تم التحديث من الملف المرتبط.'); return; }
+  }
+  if (linkedDirHandle) {
+    const ok = await readLinkedDirectory();
+    if (ok) { showSuccess('🔄 تم التحديث من المجلد المرتبط.'); return; }
+  }
+  showError('لا يوجد ملف أو مجلد مرتبط، أو تم إلغاء الإذن.');
+}
+
+async function restoreHandles() {
+  if (!window.showOpenFilePicker) return;
+  try {
+    const fileRec = await dbGet('handles', 'file_' + PROFILE);
+    if (fileRec && fileRec.handle) {
+      linkedFileHandle = fileRec.handle;
+      const ok = await readLinkedFile();
+      if (ok) {
+        document.getElementById('btnRefresh').disabled = false;
+        showSuccess('🔄 تم تحديث البيانات تلقائياً من الملف المرتبط (' + PROFILE + ').');
+        return;
+      }
+    }
+    const dirRec = await dbGet('handles', 'dir_' + PROFILE);
+    if (dirRec && dirRec.handle) {
+      linkedDirHandle = dirRec.handle;
+      const ok = await readLinkedDirectory();
+      if (ok) {
+        document.getElementById('btnRefresh').disabled = false;
+        showSuccess('🔄 تم تحديث البيانات تلقائياً من المجلد المرتبط (' + PROFILE + ').');
+        return;
+      }
+    }
+  } catch (e) {
+    console.log('No persisted handles for profile', PROFILE);
+  }
+}
+
+/* =========================
+   Classic File Input
+========================= */
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showError('الملف يجب أن يكون بصيغة CSV');
+    return;
+  }
+  const encoding = document.getElementById('encoding').value;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    let text;
+    if (encoding === 'windows-1256') text = decodeBuffer(ev.target.result, encoding);
+    else text = ev.target.result;
+    processCSV(text, file.name, true);
+  };
+  reader.onerror = function() { showError('حدث خطأ أثناء قراءة الملف.'); };
+  if (encoding === 'windows-1256') reader.readAsArrayBuffer(file);
+  else reader.readAsText(file, 'utf-8');
+}
+
+document.getElementById('csvFile').addEventListener('change', e => { handleFile(e.target.files[0]); });
+
+/* =========================
+   Drag & Drop
+========================= */
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+/* =========================
+   Clear / Reset
+========================= */
+async function clearAll() {
+  await dbDelete('cache', 'last_' + PROFILE);
+  await dbDelete('handles', 'file_' + PROFILE);
+  await dbDelete('handles', 'dir_' + PROFILE);
+  rawData = []; filteredData = []; headers = [];
+  currentPage = 1; sortCol = null; sortDir = 'asc';
+  linkedFileHandle = null; linkedDirHandle = null;
+  document.getElementById('btnRefresh').disabled = true;
+  document.getElementById('sortBar').style.display = 'none';
+  renderAll();
+  document.getElementById('stats').innerHTML = 'تم مسح كل البيانات لهذه النافذة (' + PROFILE + ').';
+  hideError(); hideSuccess();
+}
+
+/* =========================
+   Messages
+========================= */
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.innerText = msg; box.style.display = 'block';
+  setTimeout(() => { if(box.innerText === msg) box.style.display = 'none'; }, 8000);
+}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+function showSuccess(msg) {
+  const box = document.getElementById('successBox');
+  box.innerText = msg; box.style.display = 'block';
+  setTimeout(() => { if(box.innerText === msg) box.style.display = 'none'; }, 5000);
+}
+function hideSuccess() { document.getElementById('successBox').style.display = 'none'; }
+
+/* =========================
+   Auto-load on startup
+========================= */
+window.addEventListener('load', async () => {
+  initProfile();
+  await openDB();
+
+  if (window.showOpenFilePicker) {
+    await restoreHandles();
+    if (rawData.length > 0) return;
+  }
+
+  try {
+    const cached = await dbGet('cache', 'last_' + PROFILE);
+    if (cached && cached.text) {
+      const dateStr = cached.date ? new Date(cached.date).toLocaleString('ar-EG') : 'غير معروف';
+      processCSV(cached.text, cached.sourceName || 'ملف محفوظ', false);
+      document.getElementById('stats').innerHTML += `<div class="info-row">⚠️ بيانات مخبأة (آخر تحديث: ${dateStr}). اضغط "تحديث" إذا كان الملف المرتبط متاحاً.</div>`;
+      return;
+    }
+  } catch (e) { console.log('No cache for', PROFILE); }
+
+  document.getElementById('stats').innerText = '📂 لا توجد بيانات - ارفع ملف CSV أو اربط ملف/مجلد';
+});
+
+/* =========================
+   Hash change listener
+========================= */
+window.addEventListener('hashchange', () => {
+  location.reload();
+});
+</script>
+
 </body>
 </html>
