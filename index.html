@@ -648,7 +648,7 @@ function applySort() {
     if (!isNaN(an) && !isNaN(bn) && av !== '' && bv !== '') {
       result = an - bn;
     } else {
-      result = av.localeCompare(bv, 'ar');
+      result = normalizeArabic(av).localeCompare(normalizeArabic(bv), 'ar');
     }
 
     return sortDir === 'asc' ? result : -result;
@@ -657,6 +657,28 @@ function applySort() {
   filteredData = data;
   currentPage = 1;
   renderAll();
+}
+
+
+/* =========================
+   Arabic Normalization
+========================= */
+function normalizeArabic(text) {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/[ـ-ي]/g, function(ch) {
+      // Map Arabic letters with hamza variations to base form
+      const map = {
+        'أ':'ا', 'إ':'ا', 'آ':'ا', 'ٱ':'ا',
+        'ؤ':'و', 'ئ':'ي', 'ء':'',
+        'ة':'ه'
+      };
+      return map[ch] || ch;
+    })
+    .replace(/[ً-ٰٟـ]/g, '') // Remove tashkeel/diacritics
+    .replace(/\s+/g, '') // Remove all spaces
+    .trim();
 }
 
 /* =========================
@@ -680,12 +702,12 @@ function applyFilters() {
   const terms = [];
   inputs.forEach(inp => {
     const v = inp.value.trim();
-    if (v) terms.push({ col: inp.dataset.col, val: v.toLowerCase() });
+    if (v) terms.push({ col: inp.dataset.col, val: normalizeArabic(v) });
   });
 
   let data = [...rawData];
   if (terms.length > 0) {
-    data = data.filter(row => terms.every(t => (row[t.col] || '').toLowerCase().includes(t.val)));
+    data = data.filter(row => terms.every(t => normalizeArabic(row[t.col] || '').includes(t.val)));
   }
 
   if (sortCol) {
