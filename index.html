@@ -556,6 +556,8 @@ function processCSV(text, sourceName, saveToCache = true) {
     if (values.length === 1 && values[0] === '') continue;
     const obj = {};
     headers.forEach((h, idx) => { obj[h] = values[idx] !== undefined ? values[idx] : ''; });
+    obj.__norm__ = {};
+    headers.forEach(h => { obj.__norm__[h] = normalizeArabic(obj[h]); });
     rawData.push(obj);
   }
 
@@ -679,6 +681,15 @@ function normalizeArabic(text) {
 }
 
 /* =========================
+   Debounce
+========================= */
+let filterTimeout = null;
+function debounceFilter() {
+  if (filterTimeout) clearTimeout(filterTimeout);
+  filterTimeout = setTimeout(() => { currentPage = 1; applyFilters(); }, 250);
+}
+
+/* =========================
    Filters
 ========================= */
 function createFilters() {
@@ -689,7 +700,7 @@ function createFilters() {
     inp.type = 'text';
     inp.placeholder = '🔍 ' + h;
     inp.dataset.col = h;
-    inp.addEventListener('input', () => { currentPage = 1; applyFilters(); });
+    inp.addEventListener('input', () => { currentPage = 1; debounceFilter(); });
     box.appendChild(inp);
   });
 }
@@ -704,7 +715,7 @@ function applyFilters() {
 
   let data = [...rawData];
   if (terms.length > 0) {
-    data = data.filter(row => terms.every(t => normalizeArabic(row[t.col] || '').includes(t.val)));
+    data = data.filter(row => terms.every(t => (row.__norm__[t.col] || '').includes(t.val)));
   }
 
   if (sortCol) {
